@@ -1,0 +1,7 @@
+ui
+notes
+data
+config
+deno.lock
+*.db*
+.env

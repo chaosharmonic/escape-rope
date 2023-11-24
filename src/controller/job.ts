@@ -1,0 +1,153 @@
+import { JobPost, LifecycleStage } from '../types.ts'
+import { db } from '../db.ts'
+
+export const addNewJobPost = async (job: JobPost) => {
+  const { title, company, pay, description, summary, sources } = job
+
+  // should potentially be able to bypass if distinct job,
+  //  but if purging old entries it shouldn't matter much/
+  const savedEntry = await db.jobs.getOne({
+    filter: ({ value: v }) => {
+      //
+
+      // this needs better sanitization than I'm really doing here
+      //  but for now it's not critical
+      if (description == v.description) {
+        console.log('descriptions match')
+
+        return true
+      }
+
+      const [storedSearchResults, newSearchResults] = [v.sources, sources]
+        .map((arr) => arr.map((e) => e.retrievalLink))
+      const resultExists = newSearchResults
+        .some((r) => storedSearchResults.includes(r))
+
+      if (resultExists) {
+        console.log('search result exists')
+        return true
+      }
+
+      const [storedRedirects, newRedirects] = [v.sources, sources]
+        .map((arr) =>
+          arr
+            .filter((e) => Boolean(e.redirectLink))
+            .map((e) => e.redirectLink)
+        )
+
+      const redirectExists = newRedirects
+        .some((r) => storedRedirects.includes(r))
+
+      if (redirectExists) {
+        console.log('redirect exists')
+        return true
+      }
+
+      // TODO: flesh this out
+      // exclude examples from known recruiting firms
+
+      // summary: not all examples will list this
+      // pay: targets will have different formatting,
+      //  so this can't realistically be used for now
+
+      const basicDetailsMatch = title == v.title &&
+        company == v.company
+
+      const detailsMatch = basicDetailsMatch && [
+        pay == v.pay,
+        summary == v.summary,
+      ].every((c) => c)
+
+      return basicDetailsMatch
+      // return detailsMatch
+    },
+  })
+
+  if (savedEntry) {
+    console.log('found existing entry for this job. updating...')
+
+    console.log({ savedEntry, job })
+
+    const { id, value: { sources: savedSources } } = savedEntry
+    const { sources: newSources } = job
+
+    // TODO:
+    //  this should check for both the same timestamp *and* location
+    //  something along the lines of an array of objects with both properties
+    //  checking that both match on the same index, not just
+    //  that there *are* matches
+    const [storedTimestamps, newTimestamps] = [newSources, savedSources]
+      .map((arr) => arr.map((e) => e.retrievalDate))
+
+    console.log({ storedTimestamps, newTimestamps })
+
+    const hasBeenProcessed = newTimestamps
+      .some((r) => storedTimestamps.includes(r))
+
+    if (hasBeenProcessed) {
+      console.log('result already processed')
+      return savedEntry
+    }
+
+    // TODO: cover if this is manual entry
+    // that *could* be a string instead of an array
+    // may be best covered via changes to the type,
+    // but for now it doesn't matter, bc no one's doing this
+    const sources = [...savedSources, ...newSources]
+
+    console.log({ id, sources })
+
+    // TODO: merge any new data into the update
+
+    return await db.jobs.update(id, { sources })
+  }
+
+  return await db.jobs.add({ ...job, lifecycle: 'queued' })
+}
+
+const setJobPostStatus = async (jobId: string, status: LifecycleStage) => {
+  const result = await db.jobs.update(jobId, { lifecycle: status })
+
+  return result
+}
+
+export const resetJobPostStatus = async (jobId: string) =>
+  await setJobPostStatus(jobId, 'queued')
+export const flagJobPost = async (jobId: string) =>
+  await setJobPostStatus(jobId, 'flagged')
+export const ignoreJobPost = async (jobId: string) =>
+  await setJobPostStatus(jobId, 'ignored')
+
+export const superIgnoreJobPost = async (jobId: string) => {
+  await setJobPostStatus(jobId, 'ignored')
+
+  // has associated jobId
+  // how to deal with possible duplicates here?
+  // const {result: {id}} = await db.jobs.find()
+  // await ignoreCompany(companyId)
+}
+
+export const getAllJobs = async () => {
+  const { result: jobs } = await db.jobs.getMany()
+
+  return jobs
+}
+
+// TODO: bother with pagination
+export const getJobsByStatus = async (status: string) => {
+  const { result: jobs } = await db.jobs.getMany({
+    filter: ({ value: { lifecycle } }) => lifecycle == status,
+  })
+
+  return jobs
+}
+
+// ...do I care about this? Maybe for recruiting firms
+// const getJobsBySource
+
+// filter by has contacts?
+
+export const getQueuedJobs = async () => await getJobsByStatus('queued')
+export const getFlaggedJobs = async () => await getJobsByStatus('flagged')
+export const getIgnoredJobs = async () => await getJobsByStatus('ignored')
+export const getAppliedJobs = async () => await getJobsByStatus('applied')

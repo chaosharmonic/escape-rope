@@ -1,0 +1,13 @@
+{
+  "importMap": "import_map.json",
+  "tasks": {
+    "getHNJobs": "deno run --allow-read=. --allow-write=. --allow-net scripts/getHNHiringPosts.js"
+    // "scrapeInfiniteScroller": "deno run -A scripts/examples/scrapeInfiniteScroller.js",
+    // "scrapePaginatedList": "deno run -A scripts/examples/scrapePaginatedList.js"
+  },
+  "unstable": ["kv"],
+  "fmt": {
+    "semiColons": false,
+    "singleQuote": true
+  }
+}
