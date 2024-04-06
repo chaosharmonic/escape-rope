@@ -1,3 +1,5 @@
+#!/usr/bin/env -S deno run --allow-read=. --allow-write=. --allow-net
+
 import { writeJsonSync } from 'jsonfile/mod.ts'
 import { html2md } from '../src/utils/cleanup.js'
 
