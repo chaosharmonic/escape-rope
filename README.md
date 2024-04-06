@@ -56,11 +56,7 @@ _application_ around the data)
 
 ### Prerequisites
 
-- Make sure a recent version of [Deno](https://deno.land/) is installed on your
-  operating system of choice.
-  - Deno doesn't have an equivalent to the `engines` field in `package.json`,
-    but if you're troubleshooting anything, I typically keep my local install up
-    to date with current releases.
+- [Deno](https://deno.com/) 1.42 or above
 
 For now, that's it. Dependencies are pulled in using import maps and HTTP, so
 you don't need to install any of them up front.
