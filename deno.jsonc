@@ -1,7 +1,8 @@
 {
   "importMap": "import_map.json",
   "tasks": {
-    "getHNJobs": "scripts/getHNHiringPosts.js"
+    "getHNJobs": "scripts/getHNHiringPosts.js",
+    "serve": "src/server.js"
     // "scrapeInfiniteScroller": "deno run -A scripts/examples/scrapeInfiniteScroller.js",
     // "scrapePaginatedList": "deno run -A scripts/examples/scrapePaginatedList.js"
   },

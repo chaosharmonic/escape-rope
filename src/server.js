@@ -1,3 +1,5 @@
+#!/usr/bin/env -S deno run --allow-read=. --allow-write=. --allow-env --allow-net --watch
+
 import { Application, Router } from 'oak/mod.ts'
 import jobsRouter from './routes/job.js'
 import 'dotenv/load.ts'
