@@ -78,8 +78,7 @@ export interface Interview {
 export enum LifecycleStage {
   Queued = 'queued',
   Ignored = 'ignored', 
-  Liked = 'liked', 
-  Flagged = 'flagged',
+  Liked = 'liked',
   Unmatched = 'unmatched', 
   Applied = 'applied',
   Rejected = 'rejected',
