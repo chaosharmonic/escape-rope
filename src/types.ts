@@ -1,5 +1,4 @@
-// WIP. Mostly here for database schema, but setting up
-//  the db itself is also WIP
+// WIP. Mostly here for database schema
 
 export interface Person {
   name: string
@@ -35,8 +34,8 @@ export interface JobSearchParams { // more?
 }
 
 type JobSearchSource = SearchSource & {
-  searchParams: JobSearchParams
-  // (could be manual entry)
+  searchParams?: JobSearchParams
+  // this could be entered manually
   redirectLink?: string
   // this might be a place to put location if, say, a company on LI
   //  behaves like a bad actor and spams a listing for every region
@@ -78,10 +77,11 @@ export interface Interview {
 
 export enum LifecycleStage {
   Queued = 'queued',
-  Ignored = 'ignored',
+  Ignored = 'ignored', 
+  Liked = 'liked', 
   Flagged = 'flagged',
+  Unmatched = 'unmatched', 
   Applied = 'applied',
-  Closed = 'closed',
   Rejected = 'rejected',
   Interview = 'interview',
   Offer = 'offer',
@@ -120,6 +120,16 @@ export interface JobPost {
     totalRounds: number
     details: Interview[]
   }
+}
+
+// one collection might all share a single source
+type JobPostSourceOptional = JobPost & {
+  sources?: JobSearchSource[]
+}
+
+export interface BulkJobPosts {
+  jobs: JobPostSourceOptional[]
+  source: SearchSource
 }
 
 enum Reviewer {

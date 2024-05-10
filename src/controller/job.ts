@@ -105,6 +105,17 @@ export const addNewJobPost = async (job: JobPost) => {
   return await db.jobs.add({ ...job, lifecycle: 'queued' })
 }
 
+// should this be a bulk add?
+//  that might be an issue w validations
+// but it's fine to just loop over it for now
+export const bulkAddJobPosts = async (jobs: JobPost[]) => {
+  const result = await Promise.all(jobs
+    .map(async (j) => await addNewJobPost(j))
+  )
+  
+  return result
+}
+
 const setJobPostStatus = async (jobId: string, status: LifecycleStage) => {
   const result = await db.jobs.update(jobId, { lifecycle: status })
 
@@ -113,8 +124,8 @@ const setJobPostStatus = async (jobId: string, status: LifecycleStage) => {
 
 export const resetJobPostStatus = async (jobId: string) =>
   await setJobPostStatus(jobId, 'queued')
-export const flagJobPost = async (jobId: string) =>
-  await setJobPostStatus(jobId, 'flagged')
+export const likeJobPost = async (jobId: string) =>
+  await setJobPostStatus(jobId, 'liked')
 export const ignoreJobPost = async (jobId: string) =>
   await setJobPostStatus(jobId, 'ignored')
 
@@ -148,6 +159,6 @@ export const getJobsByStatus = async (status: string) => {
 // filter by has contacts?
 
 export const getQueuedJobs = async () => await getJobsByStatus('queued')
-export const getFlaggedJobs = async () => await getJobsByStatus('flagged')
+export const getFlaggedJobs = async () => await getJobsByStatus('liked')
 export const getIgnoredJobs = async () => await getJobsByStatus('ignored')
 export const getAppliedJobs = async () => await getJobsByStatus('applied')
