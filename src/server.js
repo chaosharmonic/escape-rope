@@ -1,8 +1,9 @@
 #!/usr/bin/env -S deno run --allow-read=. --allow-write=. --allow-env --allow-net --watch
 
-import { Application, Router } from 'oak/mod.ts'
+import 'dotenv/load'
+import { Application } from 'oak/application'
+import { Router } from 'oak/router'
 import jobsRouter from './routes/job.js'
-import 'dotenv/load.ts'
 
 const port = Deno.env.get('SERVER_PORT') ||
   3000

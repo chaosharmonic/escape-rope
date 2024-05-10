@@ -1,6 +1,6 @@
-import { collection, kvdex, model } from 'kvdex/mod.ts'
+import { collection, kvdex, model } from 'kvdex/'
 import { Company, JobPost } from './types.ts'
-import 'dotenv/load.ts'
+import 'dotenv/load'
 
 const filename = Deno.env.get('DB_FILENAME') || ''
 

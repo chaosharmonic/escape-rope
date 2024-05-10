@@ -1,4 +1,4 @@
-import { Router } from 'oak/mod.ts'
+import { Router } from 'oak/router'
 import * as jobsController from '../controller/job.ts'
 
 const jobsRouter = new Router()
