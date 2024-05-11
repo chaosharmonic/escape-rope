@@ -159,6 +159,6 @@ export const getJobsByStatus = async (status: string) => {
 // filter by has contacts?
 
 export const getQueuedJobs = async () => await getJobsByStatus('queued')
-export const getFlaggedJobs = async () => await getJobsByStatus('liked')
+export const getLikedJobs = async () => await getJobsByStatus('liked')
 export const getIgnoredJobs = async () => await getJobsByStatus('ignored')
 export const getAppliedJobs = async () => await getJobsByStatus('applied')
