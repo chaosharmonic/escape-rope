@@ -128,6 +128,8 @@ export const likeJobPost = async (jobId: string) =>
   await setJobPostStatus(jobId, 'liked')
 export const ignoreJobPost = async (jobId: string) =>
   await setJobPostStatus(jobId, 'ignored')
+export const unmatchJobPost = async (jobId: string) =>
+  await setJobPostStatus(jobId, 'unmatched')
 
 export const superIgnoreJobPost = async (jobId: string) => {
   await setJobPostStatus(jobId, 'ignored')
