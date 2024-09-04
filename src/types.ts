@@ -44,8 +44,9 @@ type JobSearchSource = SearchSource & {
 }
 
 // interface Referral {
-//     company: string,
+//     company: string
 //     contact: Person
+//     internal?: Boolean
 // }
 
 // TODO: parse these from a Markdown file?
@@ -108,12 +109,13 @@ export interface JobPost {
   //  different jobs)
   hiringManager?: Person
   referral?: Person
-  // not just internal; can be a recruiter
+  recruiter?: Person
+  // may not be internal
   // I might want to set person as an ID reference though
   pay?: string | number
   // probably should keep as a string, unless I can
-  //  reliably parse both range and time interval
-  //  it... seems on a test like Mistral can do this though?
+  //  reliably parse both range and time interval (hour/year)
+  //  it... seems on a test like an LLM can do this though?
   directApply?: boolean // for recruiting firms
   applyLink?: string
   applyEmail?: string // this is different from a contact
@@ -174,7 +176,7 @@ export interface Company {
   //  a *lot* of things
   // see also: benefits, culture stuff, remote, etc
   // this is a later recon thing anyway, but *still*,
-  //  parsting that might *also* be a job for an llm
+  //  parsing that might *also* be a job for an LLM
   // recentNews?, // {source, headline, date}
   //  define recent?
   // redFlags?: string[] // enum?
