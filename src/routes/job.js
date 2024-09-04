@@ -46,6 +46,32 @@ jobsRouter.post('/:jobId/ignore', async (ctx) => {
   ctx.response.body = await jobsController.ignoreJobPost(jobId)
 })
 
+jobsRouter.post('/:jobId/unmatched', async (ctx) => {
+  // include reason for unmatch?
+  const { jobId } = ctx.params
+  ctx.response.body = await jobsController.unmatchJobPost(jobId)
+})
+
+jobsRouter.post('/:jobId/applied', async (ctx) => {
+  const { jobId } = ctx.params
+  ctx.response.body = await jobsController.flagAppliedJobPost(jobId)
+})
+
+jobsRouter.post('/:jobId/interview', async (ctx) => {
+  const { jobId } = ctx.params
+  ctx.response.body = await jobsController.flagInterviewingJobPost(jobId)
+})
+
+jobsRouter.post('/:jobId/offer', async (ctx) => {
+  const { jobId } = ctx.params
+  ctx.response.body = await jobsController.flagOfferedJobPost(jobId)
+})
+
+jobsRouter.post('/:jobId/hire', async (ctx) => {
+  const { jobId } = ctx.params
+  ctx.response.body = await jobsController.flagHiredJobPost(jobId)
+})
+
 jobsRouter.post('/upload', async (ctx) => {
   const importSource = 'json'
   // TODO: take this as a param; it could be CSV

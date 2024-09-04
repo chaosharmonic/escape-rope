@@ -138,6 +138,29 @@ export const superIgnoreJobPost = async (jobId: string) => {
   // await ignoreCompany(companyId)
 }
 
+export const flagStashedJobPost = async (jobId: string) =>
+  await setJobPostStatus(jobId, 'stashed')
+export const flagShortlistedJobPost = async (jobId: string) =>
+  await setJobPostStatus(jobId, 'shortlisted')
+
+export const flagAppliedJobPost = async (jobId: string) =>
+  await setJobPostStatus(jobId, 'applied')
+export const flagInterviewingJobPost = async (jobId: string) =>
+  await setJobPostStatus(jobId, 'interview')
+export const flagOfferedJobPost = async (jobId: string) =>
+  await setJobPostStatus(jobId, 'offer')
+export const flagHiredJobPost = async (jobId: string) =>
+  await setJobPostStatus(jobId, 'hire')
+
+export const flagRejectedJobPost = async (jobId: string) =>
+  await setJobPostStatus(jobId, 'rejected')
+export const flagDeclinedJobPost = async (jobId: string) =>
+  await setJobPostStatus(jobId, 'declined')
+export const flagGhostedJobPost = async (jobId: string) =>
+  await setJobPostStatus(jobId, 'ghosted')
+export const flagRescindedJobPost = async (jobId: string) =>
+  await setJobPostStatus(jobId, 'rescinded')
+
 export const getAllJobs = async () => {
   const { result: jobs } = await db.jobs.getMany()
 
