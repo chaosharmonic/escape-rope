@@ -98,7 +98,6 @@ export const addNewJobPost = async (job: JobPost) => {
     console.log({ id, sources })
 
     // TODO: merge any new data into the update
-
     return await db.jobs.update(id, { sources })
   }
 
@@ -140,6 +139,7 @@ export const superIgnoreJobPost = async (jobId: string) => {
   // await ignoreCompany(companyId)
 }
 
+// more specific "likes"
 export const flagStashedJobPost = async (jobId: string) =>
   await setJobPostStatus(jobId, 'stashed')
 export const flagShortlistedJobPost = async (jobId: string) =>
@@ -154,6 +154,7 @@ export const flagOfferedJobPost = async (jobId: string) =>
 export const flagHiredJobPost = async (jobId: string) =>
   await setJobPostStatus(jobId, 'hire')
 
+// exits
 export const flagRejectedJobPost = async (jobId: string) =>
   await setJobPostStatus(jobId, 'rejected')
 export const flagDeclinedJobPost = async (jobId: string) =>
@@ -165,6 +166,27 @@ export const flagRescindedJobPost = async (jobId: string) =>
 
 export const getAllJobs = async () => {
   const { result: jobs } = await db.jobs.getMany()
+
+  return jobs
+}
+
+// TODO: types
+export const searchJobs = async (filters) => {
+  const { result: jobs } = await db.jobs.getMany({
+    filter: ({ value }) => {
+      // TODO: handle more than just status
+      
+      // TODO: types
+      for (let [property, options] of Object.entries(filters)) {
+        if (property == 'status' && !options.includes(value.lifecycle)) {
+          // console.log({options, status: value.lifecycle})
+          return false
+        }
+      }
+      
+      return true
+    }
+  })
 
   return jobs
 }

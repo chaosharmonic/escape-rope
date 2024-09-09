@@ -9,6 +9,14 @@ jobsRouter.get('/', async (ctx) => {
 // TODO: add job
 // TODO: update job
 
+jobsRouter.post('/search', async (ctx) => {
+  const payload = await ctx.request.body.formData()
+  
+  const filters = JSON.parse(payload.get('filters'))
+
+  ctx.response.body = await jobsController.searchJobs(filters)
+})
+
 // these names are styled after dating apps,
 //  just since I'm ripping a log of the categorization
 //  handling from them conceptually
@@ -73,18 +81,27 @@ jobsRouter.post('/:jobId/hire', async (ctx) => {
 })
 
 jobsRouter.post('/upload', async (ctx) => {
-  const importSource = 'json'
-  // TODO: take this as a param; it could be CSV
-  //  or, do this from the frontend
+  // TODO: handle alternate request methods
+  //  this *could* still be directly sent as JSON
+  const payload = await ctx.request.body.formData()
+
+  // if direct JSON,
+  // data = await ctx.request.body().value
+  const data = await payload.get('file').text()
+    .then(j => {
+      // TODO: send or infer file type
+      // do something different for CSV
+      console.log(j)
+      return JSON.parse(j)
+    })
+
   const {
     jobs,
     source = {
-      name: importSource,
+      name: 'user upload',
       retrievalDate: new Date()
     }
-  } = await ctx.request.body().value
-
-  // console.log({jobs})
+  } = data
 
   const jobsToAdd = jobs.map((j) => {
     // spread static data on sourcing (site, date, etc)
@@ -94,10 +111,15 @@ jobsRouter.post('/upload', async (ctx) => {
     return { ...j, sources }
   })
 
-  console.log({job: jobsToAdd[0]})
+  try {
+    const result = await jobsController.bulkAddJobPosts(jobsToAdd)
 
-  ctx.response.body = await jobsController.bulkAddJobPosts(jobsToAdd)
-  // ctx.response.body = jobsToAdd[0]
+    ctx.response.body = result
+
+  } catch ({ message: m }) {
+    console.error(m)
+    ctx.response.body = { error: m }
+  }
 })
 
 // undo action
