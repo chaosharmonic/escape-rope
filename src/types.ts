@@ -19,7 +19,7 @@ export interface SearchSource {
   name: string
   postDate?: Date // if available
   retrievalDate: Date
-  retrievalLink?: string // may be blank if recruiter
+  retrievalLink?: string // may be blank if recruiter/referral
   // also is URL a valid TS type?
 }
 
@@ -94,6 +94,15 @@ export enum LifecycleStage {
   Hire = 'hire',
 }
 
+export interface ForumPost {
+  source: string // enum for this?
+  postDate: Date
+  retrievalDate: Date
+  content: string
+  // jobs?: JobPost[] this can be filled later; I'm undecided on how
+  //  best to link these
+}
+
 export interface JobPost {
   title: string
   company: string
@@ -112,10 +121,13 @@ export interface JobPost {
   recruiter?: Person
   // may not be internal
   // I might want to set person as an ID reference though
-  pay?: string | number
-  // probably should keep as a string, unless I can
-  //  reliably parse both range and time interval (hour/year)
-  //  it... seems on a test like an LLM can do this though?
+  pay?: {
+    unit: string
+    values: number | { // single value, or range
+      high: number
+      low: number
+    }
+  } | string // with fallback until I have proper parsing for this
   directApply?: boolean // for recruiting firms
   applyLink?: string
   applyEmail?: string // this is different from a contact
