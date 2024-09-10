@@ -10,14 +10,13 @@ grab results from job boards and output the results as JSON, and up until now
 it's mostly been
 [an extended experiment in Web scraping](https://bhmt.dev/blog/scraping).
 
-Now, its an experiment in a _few_ different things -- the database schema are a
-first crack at using TypeScript, I'm taking Deno KV (and `kvdex`) for a spin for
-data persistence, and I've been toying around with a few different options for
-an eventual UI.
+Now, it's an experiment in a _few_ different things. the database schema are a
+first crack at using TypeScript. I'm taking Deno KV (and `kvdex`) for a spin for
+data persistence. (And contributed `getOne` and `updateOne` to get this to
+work!). I'm currently toying around with various options for a UI, and starting
+to evaluate what other tools I might want to build around it, or how I might
+integrate them.
 
-The code in this repo is a bit of a skeleton, mostly because it contains the
-pieces I'm building _around_ the platform-specific scraping code (and some
-loosely anonymized examples), and not the scraping code itself.
 
 ## Why? (Goals and non-goals)
 
@@ -25,22 +24,19 @@ Primarily, it's a tool I've been building for me -- as an experiment, a learning
 exercise, and a tech demo to show off to anyone that it's aided me in connecting
 with. Mostly, it's because I believe in building the thing you want to use.
 
-In this case, the thing I want to use is an exit path, in the event that I
-ever have another horrible boss.
+In this case, the thing I want to use is an exit path -- something of a safety
+mechanism, in the event that a workplace ever becomes detrimental to my
+well-being. And also something of a way of pulling myself back up, in the event
+that one ever throws me into a ditch. Or, say, threatens a "slow climb 🧗"
+in public settings.
 
-A _secondary_ purpose is as a tool for others, but while I'm sharing this as I
-build it out, my core use case is speed up/scale up my own workflow. so while I
-have a backlog of "features" I want to add, they prioritize practical uses more
-than things that might enable, say, setting this up as a hosted service. Once I
-at least have a UI that I like (and some better definition around the db
-modeling), I'll probably throw together some test data as a demo, to aid in
-setting this up locally, but I'm trying to _reduce_ tedium so I'm not especially
-interested in the maintenance burden of maintaining the scraping code for public
-consumption.
-
-(If you don't mind that I have no intention of _supporting_ it, though, feel
-free to reach out for a private repo containing my site-specific
-implementatons.)
+I _hope_ maybe someone else finds it helpful, but its core purpose is to make
+my life easier. I'm not necessarily prioritizing things outside what I strictly
+need for local use, so while I'm considering how I might eventually deploy this
+for demo purposes, I'm not necessarily putting heavy priority on things like
+user config or auth in the short term. I have a loose "roadmap" of other parts
+of this process that I want to automate, but I'm working on it in stages and
+trying not to put more effort into building it than I am into using it.
 
 That said, part of removing tedium here is to keep the project as self-contained
 as possible -- using what comes out of the box first, and then leaning on
