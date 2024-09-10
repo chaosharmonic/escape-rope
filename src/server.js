@@ -10,6 +10,12 @@ const port = Deno.env.get('SERVER_PORT') ||
 
 const app = new Application()
 
+// TODO: find a better way to specify this, including localhost
+app.use((ctx, next) => {
+  ctx.response.headers.set('Access-Control-Allow-Origin', '*')
+  return next()
+})
+
 const router = new Router()
 
 router.use('/jobs', jobsRouter.routes())
