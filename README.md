@@ -13,10 +13,13 @@ it's mostly been
 Now, it's an experiment in a _few_ different things. the database schema are a
 first crack at using TypeScript. I'm taking Deno KV (and `kvdex`) for a spin for
 data persistence. (And contributed `getOne` and `updateOne` to get this to
-work!). I'm currently toying around with various options for a UI, and starting
+work!) I'm currently toying around with various options for a UI, and starting
 to evaluate what other tools I might want to build around it, or how I might
 integrate them.
 
+There's a first draft of the UI
+[here](https://github.com/chaosharmonic/escape-rope-ui). Note that I don't have
+test data or other niceties that would actually make this demo-ready yet.
 
 ## Why? (Goals and non-goals)
 
@@ -42,9 +45,9 @@ That said, part of removing tedium here is to keep the project as self-contained
 as possible -- using what comes out of the box first, and then leaning on
 third-party libraries only where I _need_ them. It's not _entirely_ free of them
 -- and that's not an explicit goal -- but what _is_ an explicit goal is to keep
-the toolchain lean I don't have to have opinions about every individual piece of
-it, and that's best served by using the batteries that are included where that's
-reasonably an option.
+the toolchain lean enough that I don't have to have opinions about every
+individual piece of it, and that's best served by using the batteries that are
+included where that's reasonably an option.
 
 ## How? (Running this project)
 
