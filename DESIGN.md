@@ -1,4 +1,4 @@
-sHere's a lengthier overview of what I laid out in the README.
+Here's a lengthier overview of what I laid out in the README.
 
 ## What? (Overview)
 
