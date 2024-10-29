@@ -5,9 +5,7 @@
 ## What? (Overview)
 
 This is a loose collection of tooling I've been building as a side project to
-automate my job search habits. Primarily, this has involved building scrapers to
-grab results from job boards and output the results as JSON, and up until now
-it's mostly been
+automate my job search habits, built around data I've been gathering through
 [an extended experiment in Web scraping](https://bhmt.dev/blog/scraping).
 
 Now, it's an experiment in a _few_ different things. the database schema are a
@@ -66,23 +64,14 @@ you don't need to install any of them up front.
 To run the API server: `deno run serve`
 
 The core scraping workflow is, similiarly, built around Deno's standard task
-runner -- currently I'm leveraging this for gathering new listings, and I plan
-on doing so further for the API I'll eventually be seeding with this (and UI
-I'll eventually be running on top of that).
+runner -- currently I'm leveraging this for gathering new listings, but I'm
+in the process of redesigning the crawlers into something I more extensible.
 
 Tasks are defined in `deno.jsonc` and run using `deno run {name}`
 
 I've left the one to get "who is hiring" threads from a Hacker News API intact,
 for example's sake. But it's not going to give you structured responses, and is
 really just there for the sake of having _a_ task to illustrate this with. (You
-might find the raw data useful to mine in other ways, but while it's occurred to
-me that that I could get more structure out of this using, say, a
-[Llamafile](https://github.com/mozilla-ocho/llamafile), it's not an immediate
-priority.)
-
-Otherwise, what you'll want to do is modify the scraping code provided to fit
-your platform of choice. I've provided loose examples of scraping both paginated
-lists and infinite scrolls. They're based on the ones I'm using myself, but have
-been adapted to be a little more generic. Note that (for similar reasons to the
-above) this generally doesn't cover beating things like CAPTCHAs or nagging auth
-popups, so you'll have to write those handlers on your own.
+might find the raw data useful to mine in other ways, but while I periodically
+toy with using a [Llamafile](https://github.com/mozilla-ocho/llamafile), to get
+structure out of them, it's not an immediate priority.)

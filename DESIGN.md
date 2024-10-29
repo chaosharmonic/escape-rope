@@ -1,13 +1,11 @@
-Here's a lengthier overview of what I laid out in the README.
+sHere's a lengthier overview of what I laid out in the README.
 
 ## What? (Overview)
 
-This is a loose collection of tooling I've been building as a side project to
-automate my job search habits. Primarily, this has involved building scrapers to
-grab results from job boards and output the results as JSON, and up until now
-it's mostly been
-[an extended experiment in Web scraping](https://bhmt.dev/blog/scraping) (hence
-the name).
+This is a loose collection of tooling I've been working on as a side project to
+automate my job search habits. Primarily, this has involved building crawlers to
+grab results from job boards and output the results as JSON, via
+[an extended experiment in Web scraping](https://bhmt.dev/blog/scraping).
 
 But the longer-term goal is I _guess_ closer to a minimalist CRM. Ultimately, I
 want to also be able to do recon on _companies_ this way, and use the data to
@@ -17,10 +15,10 @@ automate more of this process. Varying ideas I've been throwing around include:
   - automating basic recon on companies that I'm potentially interested in
 - cover letter generation
 - a frontend loosely resembling Tinder for "swiping" through results
-  (conceptually anyway, because I don't really care specifically about that
-  design language)
-  - a super-*dis*like, where "swiping" _down_ means you never see posts from
-    that company again
+  (partially implemented; repo link in README)
+- interview tracking
+- tracking for multiple job searches
+- a plugin system for new data sourcs
 
 But you shouldn't assume the above is necessarily a roadmap, because this
 _isn't_ a product.
@@ -29,21 +27,25 @@ _isn't_ a product.
 
 This is a tool for me first, and a tool for others second. I'm sharing as I go,
 but my core use case is speed up/scale up my own workflow, and while I have a
-backlog of "features" I want to add I'm not
+backlog of "features" I want to add this is something I'm more doing as I have
+bandwidth to spare and not really really trying to pour all my time into.
 
 Primarily, it's a tool I've been building for me -- as an experiment, a learning
 exercise, and a tech demo to show off to anyone that it's aided me in connecting
 with. It's still not the _most_ efficient way of doing this, necessarily -- I
 know there's a scattering of platforms with more modern ways of streamlining
 this process than what's offered by traditional job boards -- but I believe that
-there's value in building the things you want to use.
+there's value in
+[building the things you want to use](https://bhmt.dev/blog/diy).
 
 As for why it's not more than that:
 
-- First of all, the point of this is to _remove_ tedium, and maintaining
-  scraping code in public, or for anything I could hypothetically sell, is an
-  arms race I really don't want to deal with. I'll have some examples in the
-  `scripts/` folder, but you'll want to modify them to suit your own targets.
+- First of all, the point of this is to _remove_ tedium, and I don't really want
+  the support burden of maintaining a this as a product. Just the integrations
+  are an arms race I really don't want to deal with. At one point that also
+  applied to the scraping code, but now I'm redesigining parts of it to work
+  with the other parts of this project. In the meantime some examples are in
+  the `scripts/` folder, but you'll want to modify them to suit your own targets.
   (I'm also being generic when I say "targets" because the _long_ long-term plan
   is to automate other personal nonsense like apartment searching with this. The
   whole process of scrolling through listings, filtering them down by overall
@@ -70,10 +72,14 @@ As for why it's not more than that:
 
 _But_, because the whole point here is to remove tedium, it _also_ isn't heavily
 reliant on third-party libraries in order to run. The whole thing is built using
-Deno, and aims at avoiding excessive use of outside dependences. Not counting
-the Deno stdlib (or `jsonfile`, which _used_ to be in the stdlib), dependencies
-I _am_ using right now -- outside of any eventual UI -- are limited to polyfills
-(`DenoDOM`) and browser automation (`astral`).
+Deno, and aims at avoiding excessive use of outside dependences. So far, not 
+counting the Deno stdlib, it's been limited to:
+
+- API routing (`oak`)
+- Tooling for Deno KV (`kvdex`)
+- Browser automation (`astral`)
+- Markdown (`remark`/`rehype`)
+- UI code written in React purely until I make real decisions about that
 
 I don't expect it to _stay_ that way as I eventually flesh out the various
 pieces of this -- it isn't an explicit goal, and I can already think of several
