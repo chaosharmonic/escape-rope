@@ -4,6 +4,7 @@ export interface Person {
   name: string
   title?: string
   email?: string
+  linkedIn?: string
   notes: string // Markdown
   // ...other contact info? LinkedIn, phone
   // contactHistory??
