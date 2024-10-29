@@ -1,3 +1,16 @@
+import 'dotenv/load'
+// TODO: replace (most of) this with some actual user settings
+
+const wsEndpoint = Deno.env.get('WS_ENDPOINT')
+const webSocketOptions = wsEndpoint ? { wsEndpoint } : {}
+
+export const browserOptions = {
+  ...webSocketOptions,
+  headless: false,
+  defaultViewport: null,
+  args: ['--start-maximized'],
+}
+
 // you may want to pass these into browser automation as args
 //  in which case `DOMParser` will already exist
 
