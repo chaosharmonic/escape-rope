@@ -90,6 +90,7 @@ export enum LifecycleStage {
   Declined = 'declined',
   Ghosted = 'ghosted',
   Interview = 'interview',
+  Withdrawn = 'withdrawn',
   Offer = 'offer',
   Rescinded = 'rescinded',
   Hire = 'hire',
