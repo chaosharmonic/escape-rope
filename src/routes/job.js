@@ -54,6 +54,16 @@ jobsRouter.post('/:jobId/ignore', async (ctx) => {
   ctx.response.body = await jobsController.ignoreJobPost(jobId)
 })
 
+jobsRouter.post('/:jobId/shortlisted', async (ctx) => {
+  const { jobId } = ctx.params
+  ctx.response.body = await jobsController.flagShortlistedJobPost(jobId)
+})
+
+jobsRouter.post('/:jobId/stashed', async (ctx) => {
+  const { jobId } = ctx.params
+  ctx.response.body = await jobsController.flagStashedJobPost(jobId)
+})
+
 jobsRouter.post('/:jobId/unmatched', async (ctx) => {
   // include reason for unmatch?
   const { jobId } = ctx.params
@@ -70,9 +80,19 @@ jobsRouter.post('/:jobId/interview', async (ctx) => {
   ctx.response.body = await jobsController.flagInterviewingJobPost(jobId)
 })
 
+jobsRouter.post('/:jobId/withdrawn', async (ctx) => {
+  const { jobId } = ctx.params
+  ctx.response.body = await jobsController.flagWithdrawnJobPost(jobId)
+})
+
 jobsRouter.post('/:jobId/offer', async (ctx) => {
   const { jobId } = ctx.params
   ctx.response.body = await jobsController.flagOfferedJobPost(jobId)
+})
+
+jobsRouter.post('/:jobId/rescinded', async (ctx) => {
+  const { jobId } = ctx.params
+  ctx.response.body = await jobsController.flagRescindeddJobPost(jobId)
 })
 
 jobsRouter.post('/:jobId/hire', async (ctx) => {
