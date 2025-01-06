@@ -1,10 +1,12 @@
 {
   "imports": {
+    "async/": "jsr:/@std/async/",
     "datetime/": "jsr:/@std/datetime/",
+    "deno-dom/": "jsr:@b-fuze/deno-dom/",
     "dotenv/": "jsr:/@std/dotenv/",
     "jsonfile/": "https://deno.land/x/jsonfile@1.0.0/",
     "astral/": "jsr:/@astral/astral/",
     "kvdex/": "jsr:/@olli/kvdex/",
     "oak/": "jsr:/@oak/oak/"
-  }
+  } 
 }

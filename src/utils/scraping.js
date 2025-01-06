@@ -1,21 +1,44 @@
-import 'dotenv/load'
+import { launch, connect } from 'astral/'
+// TODO: import dynamically based on env
+import { DOMParser } from 'deno-dom/'
 // TODO: replace (most of) this with some actual user settings
+import 'dotenv/load'
 
-const wsEndpoint = Deno.env.get('WS_ENDPOINT')
-const webSocketOptions = wsEndpoint ? { wsEndpoint } : {}
+export const wsEndpoint = Deno.env.get('WS_ENDPOINT')
 
-export const browserOptions = {
-  ...webSocketOptions,
+// TODO: randomize this
+const userAgent = ''
+const proxyServer = ''
+
+const windowSize = '--windowsize=1920,1080'
+// or, '--start-mazimized'
+
+const launchOptions = {
+  userAgent,
   headless: false,
   defaultViewport: null,
-  args: ['--start-maximized'],
+  args: [
+    proxyServer && `--proxy-server=${proxyServer}`,
+    windowSize,
+    '--incognito' // FIXME: this has issues upstream
+  ].filter(e => Boolean(e))
 }
+
+const connectOptions = {
+  userAgent,
+  wsEndpoint
+}
+
+export const setupBrowser = async () => wsEndpoint
+  ? await connect(connectOptions)
+  : await launch(launchOptions)
+
+// export const browser = await setupBrowser()
 
 // you may want to pass these into browser automation as args
 //  in which case `DOMParser` will already exist
-
-// if you need to use parseHTML or getDoc server-side, uncomment this line:
-// import { DOMParser } from 'deno-dom/mod.ts'
+// browser automation can take the functions as strings,
+//  which will skip the dependencies anyway
 
 export const fetchHTML = (endpoint, options) =>
   fetch(endpoint, options)
