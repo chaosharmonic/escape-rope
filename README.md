@@ -28,11 +28,11 @@ with. Mostly, it's because I believe in building the thing you want to use.
 In this case, the thing I want to use is an exit path -- something of a safety
 mechanism, in the event that a workplace ever becomes detrimental to my
 well-being. And also something of a way of pulling myself back up, in the event
-that one ever throws me into a ditch. Or, say, threatens a "slow climb 🧗"
-in public settings.
+that one ever throws me into a ditch. Or, say, threatens a "slow climb 🧗" in
+public settings.
 
-I _hope_ maybe someone else finds it helpful, but its core purpose is to make
-my life easier. I'm not necessarily prioritizing things outside what I strictly
+I _hope_ maybe someone else finds it helpful, but its core purpose is to make my
+life easier. I'm not necessarily prioritizing things outside what I strictly
 need for local use, so while I'm considering how I might eventually deploy this
 for demo purposes, I'm not necessarily putting heavy priority on things like
 user config or auth in the short term. I have a loose "roadmap" of other parts
@@ -54,18 +54,18 @@ _application_ around the data)
 
 ### Prerequisites
 
-- [Deno](https://deno.com/) 1.46 or above
+- [Deno](https://deno.com/) 2.1 or above
 
-For now, that's it. Dependencies are pulled in using import maps and HTTP, so
-you don't need to install any of them up front.
+For now, that's it. Other dependencies are pulled in using import maps and HTTP,
+so you don't need to install any of them up front.
 
 ### Usage
 
 To run the API server: `deno run serve`
 
 The core scraping workflow is, similiarly, built around Deno's standard task
-runner -- currently I'm leveraging this for gathering new listings, but I'm
-in the process of redesigning the crawlers into something I more extensible.
+runner -- currently I'm leveraging this for gathering new listings, but I'm in
+the process of redesigning the crawlers into something more extensible.
 
 Tasks are defined in `deno.jsonc` and run using `deno run {name}`
 
@@ -73,5 +73,5 @@ I've left the one to get "who is hiring" threads from a Hacker News API intact,
 for example's sake. But it's not going to give you structured responses, and is
 really just there for the sake of having _a_ task to illustrate this with. (You
 might find the raw data useful to mine in other ways, but while I periodically
-toy with using a [Llamafile](https://github.com/mozilla-ocho/llamafile), to get
+toy with using a [Llamafile](https://github.com/mozilla-ocho/llamafile) to get
 structure out of them, it's not an immediate priority.)
