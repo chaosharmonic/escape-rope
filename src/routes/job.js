@@ -70,6 +70,11 @@ jobsRouter.post('/:jobId/unmatched', async (ctx) => {
   ctx.response.body = await jobsController.unmatchJobPost(jobId)
 })
 
+jobsRouter.post('/:jobId/expired', async (ctx) => {
+  const { jobId } = ctx.params
+  ctx.response.body = await jobsController.flagExpiredJobPost(jobId)
+})
+
 jobsRouter.post('/:jobId/applied', async (ctx) => {
   const { jobId } = ctx.params
   ctx.response.body = await jobsController.flagAppliedJobPost(jobId)

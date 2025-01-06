@@ -129,6 +129,8 @@ export const ignoreJobPost = async (jobId: string) =>
   await setJobPostStatus(jobId, 'ignored')
 export const unmatchJobPost = async (jobId: string) =>
   await setJobPostStatus(jobId, 'unmatched')
+export const flagExpiredJobPost = async (jobId: string) =>
+  await setJobPostStatus(jobId, 'expired')
 
 export const superIgnoreJobPost = async (jobId: string) => {
   await setJobPostStatus(jobId, 'ignored')
@@ -154,7 +156,9 @@ export const flagOfferedJobPost = async (jobId: string) =>
 export const flagHiredJobPost = async (jobId: string) =>
   await setJobPostStatus(jobId, 'hire')
 
-// exits
+// more specific exits
+export const flagWithdrawnJobPost = async (jobId: string) =>
+  await setJobPostStatus(jobId, 'withdrawn')
 export const flagRejectedJobPost = async (jobId: string) =>
   await setJobPostStatus(jobId, 'rejected')
 export const flagDeclinedJobPost = async (jobId: string) =>
