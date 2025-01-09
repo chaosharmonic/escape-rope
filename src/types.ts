@@ -124,17 +124,16 @@ export interface JobPost {
   // may not be internal
   // I might want to set person as an ID reference though
   pay?: {
-    unit: string
-    values: number | { // single value, or range
-      high: number
-      low: number
-    }
-  } | string // with fallback until I have proper parsing for this
+    per: string // time
+    min?: number
+    max?: number
+    listedRange: string // fallback in case parsing fails
+  } | string // fallback in general
   directApply?: boolean // for recruiting firms
   applyLink?: string
   applyEmail?: string // this is different from a contact
   // because it *could* just be a generic email
-  lifecycle?: LifecycleStage // = LifecycleStage.Saved // FIX
+  lifecycle?: LifecycleStage // FIXME: = LifecycleStage.Saved
   summary?: string
   description?: string
   interviews?: {

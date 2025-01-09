@@ -1,4 +1,5 @@
 import { delay } from 'async/delay'
+import { ensureDirSync } from 'fs/'
 import { writeJsonSync } from 'jsonfile/mod.ts'
 import { flagForbiddenWords } from '../../src/utils/cleanup.js'
 import {
@@ -8,6 +9,9 @@ import {
 } from '../../src/utils/scraping.js'
 import { getAllJobs } from '../../src/controller/job.ts'
 import { html2md } from '../../src/utils/cleanup.js'
+
+// TODO: add some structure for setting up data types
+// expected and optional details
 
 // WIP
 export class CrawlerBase {
@@ -41,21 +45,26 @@ export class CrawlerBase {
       //  like unique session IDs
       if (links.includes(retrievalLink)) return true
 
-      // skip checking optional fields if one side is missing
-      const optionalFieldConditions = ['pay', 'summary']
-        .map(k => !(e[k] && job[k]) || e[k] == job[k])
+      // check that pay ranges match, only if it exists on both
+      const payMatches = !(e.pay && job.pay) || (
+        e.pay.type == job.pay.type
+        && e.pay.min == job.pay.min
+        && e.pay.max == job.pay.max
+      )
 
       // FIXME: strictly speaking, this only works for direct
       //  hire posts -- for recruiting firms, it can be too wide
       //  of a net, and falsely flag separate jobs with
       //  the same title... but for now this is fine, and
-      //  checking optional metadata can mitigate it somewhat
-      // 
+      //  checking pay can mitigate this somewhat
+
+      // checking summary could also help, but that might vary
+      //  across different targets
 
       return [
         e.title == job.title,
         e.company == job.company,
-        ...optionalFieldConditions
+        // payMatches
       ].every((c) => c)
     })
   }
@@ -64,6 +73,14 @@ export class CrawlerBase {
     console.log(`Got ${results.length} entries`)
 
     const condensedResults = results.reduce((a, b) => {
+      /* NOTE:
+        this link is constructed in the previous step, but it's
+          important to be aware that this logic can break if 
+          there are unique query params (say, any form of
+          session tracking), so it's important to sanitize
+            this in various places
+        this also matters when checking server-side
+      */
       const [ retrievalLink ] = b.retrievalLinks
       
       const existingResult = this.detectDuplicateJob(b, a)
@@ -96,7 +113,7 @@ export class CrawlerBase {
       
       const passesFilters = [
         flagForbiddenWords(r, 'title'),
-        originsMatch
+        !baseURL || originsMatch
       ].every((e) => e)
       
       return passesFilters
@@ -114,6 +131,8 @@ export class CrawlerBase {
     //  top level results, in which case you wouldn't
     //  want to *delete* them outright, just skip
     //  making detailed requests on them
+    // even on an identical result, you might still
+    //  want to log if it came from a different search
     const taggedResults = results.map(job => {
       const saved = this.detectDuplicateJob(job, savedResults)
 
@@ -129,18 +148,66 @@ export class CrawlerBase {
     return taggedResults
   }
 
-  writeResultsToJSON(data, outputdir = '.') {
+  parsePayRange(range) {
+    const lower = range.toLowerCase()
+
+    const numbers = lower
+      .replaceAll('k', '000 ')
+      .replaceAll(',', '')
+      .replace(/\$|\/|-/g, ' ') // replace: $ / and -
+      .split(' ') // ...with a split character
+      .map(n => Number(n)) // ...then return
+      .filter(n => n) // ...an array of numbers in the string
+
+    const getPayInterval = () => {
+      if (['hr', 'hour'].some((w) => lower.includes(w))) {
+        return 'hour'
+      }
+
+      if (lower.includes('month')) return 'month'
+      
+      if (lower.includes('day')) return 'day'
+
+      return 'year'
+    }
+
+    const type = getPayInterval()
+
+    const min = numbers.at(0)
+    const max = numbers.at(1) || numbers.at(0)
+
+    const detail = { type, range }
+
+    if (max != min) return { min, max, ...detail }
+
+    // TODO: find more examples of this
+    if (lower.includes('up to')) return { max, ...detail }
+
+    return { min, ...detail }
+  }
+
+  // NOTE: `.` here is relative to your cwd
+  //  *NOT* other imports!
+  writeResultsToJSON(data, outputDir = './data') {
+    ensureDirSync(outputDir)
+    
     const formattedDate = this.retrievalDate.toISOString()
-    const filename = `${outputdir}/${formattedDate}.json`
+    const filename = `${outputDir}/${formattedDate}.json`
 
     writeJsonSync(filename, data, { spaces: 2 })
   }
 
   // extension or automation
-  // fetch results from same origin
-  async fetchJobDetails(link, page) {
+  async fetchPage(link, page) {
+    
+    // if env is extension
     // if (!page) return await fetchHTML(link)
+    // fetch results from same origin
 
+    // if env is automation
+    // const utils =
+    //   `const fetchHTML = ${fetchHTML.toString()}`
+    // pass into fn
     return await page.evaluate(async (l) => {
       // TODO: figure out loading this as a script
       const fetchHTML = (url) => fetch(url)
@@ -148,6 +215,12 @@ export class CrawlerBase {
       
       return await fetchHTML(l)
     }, { args: [ link ] })
+
+    // if fetch is blocked
+    // await page.goto
+    // return innerHTML
+
+    // if env is cli, take a command
 
     // TODO: options for other server-side tools...
     //  `curl-impersonate`?
@@ -166,8 +239,10 @@ export class CrawlerBase {
     }
 
     for (let [attempt] of Array(maxRetries).entries()) {
+      const count = attempt + 1
+      
       if (attempt > 0) {
-        console.log(`attempt #${attempt + 1}`)
+        console.log(`attempt #${count}`)
         console.log(`remaining entries: ${remaining.length}`)
       }
 
@@ -182,26 +257,26 @@ export class CrawlerBase {
 
         const { title, company } = job
 
-        console.log(`Getting result ${i + 1}: ${title} at ${company}`)
+        console.log(`Getting result ${i + 1}: ${title} at ${company.name || company}`)
 
         const [ retrievalLink ] = job.retrievalLinks
 
         try {
-          const html = await this.fetchJobDetails(retrievalLink, page)
+          const html = await this.fetchPage(retrievalLink, page)
 
           const detail = parseFn(html)
-
-          if (!detail.description) throw new Error("Couldn't parse details")
           
           const { description } = detail
-          
+
+          if (!description) throw new Error("Couldn't parse details")
+
           detail.description = await html2md(description)
 
           for (let [k, v] of Object.entries(detail)) job[k] ||= v
         } catch(e) {
           console.error('fetch failed!')
-          console.error(e)
-          // job.error = e
+          console.error(e.message)
+          // job.error = e.message
         }
       }
 
@@ -213,7 +288,10 @@ export class CrawlerBase {
         break
       }
 
-      console.log('Run completed','')
+      console.log(`completed attempt ${count}`, '\n')
+      
+      if (count == maxRetries) break
+
       await delay(300 * 1000)
     }
 
