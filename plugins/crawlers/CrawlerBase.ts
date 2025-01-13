@@ -126,6 +126,7 @@ export class CrawlerBase {
 
   async tagSavedJobResults(results) {
     const savedResults = await getAllJobs()
+      .then(results => results.map(j => j.value))
 
     // you may want to still save details from the
     //  top level results, in which case you wouldn't
