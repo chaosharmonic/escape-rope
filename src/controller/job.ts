@@ -2,17 +2,22 @@ import { JobPost, LifecycleStage } from '../types.ts'
 import { db } from '../db.ts'
 
 export const addNewJobPost = async (job: JobPost) => {
-  const { title, company, pay, description, summary, sources } = job
+  const {
+    title,
+    company,
+    pay,
+    description,
+    summary,
+    sources
+  } = job
 
   // should potentially be able to bypass if distinct job,
-  //  but if purging old entries it shouldn't matter much/
+  //  but if purging old entries it shouldn't matter much
   const savedEntry = await db.jobs.getOne({
     filter: ({ value: v }) => {
-      //
-
       // this needs better sanitization than I'm really doing here
       //  but for now it's not critical
-      if (description == v.description) {
+      if (description && description == v.description) {
         console.log('descriptions match')
 
         return true
