@@ -137,7 +137,8 @@ export class CrawlerBase {
     const taggedResults = results.map(job => {
       const saved = this.detectDuplicateJob(job, savedResults)
 
-      const isNew = !saved
+      // TODO: only skip if there's a JD
+      const isNew = !saved//?.description
 
       return {...job, isNew}
     })
@@ -228,7 +229,12 @@ export class CrawlerBase {
     //  `page.goto`
   }
 
-  async fetchAllJobDetailPages(data, { maxRetries = 10, page, parseFn }) {
+  async fetchAllJobDetailPages(data, {
+    maxRetries = 10,
+    page,
+    parseFn,
+    writeFn
+  }) {
     let remaining = [ ...data ]
 
     const newResults = data.filter(j => j.isNew)
@@ -282,12 +288,14 @@ export class CrawlerBase {
       }
 
       remaining = data
-        .filter(({ description: d }) => !d)
+        .filter(({ description: d, isNew }) => isNew && !d)
 
       if (!remaining.length) {
         console.log('done!')
         break
       }
+
+      writeFn(data)
 
       console.log(`completed attempt ${count}`, '\n')
       
