@@ -116,7 +116,6 @@ jobsRouter.post('/upload', async (ctx) => {
     .then(j => {
       // TODO: send or infer file type
       // do something different for CSV
-      console.log(j)
       return JSON.parse(j)
     })
 
@@ -131,9 +130,14 @@ jobsRouter.post('/upload', async (ctx) => {
   const jobsToAdd = jobs.map((j) => {
     // spread static data on sourcing (site, date, etc)
     //  into one object w the dynamic retrievalDate value
-    const sources = j.sources.map((s) => ({ ...s, ...source }))
+    const output = { ...j }
     
-    return { ...j, sources }
+    const sources = j.retrievalLinks
+      .map((retrievalLink) => ({ retrievalLink, ...source }))
+    
+    delete(output.retrievalLinks)
+    
+    return { ...output, sources }
   })
 
   try {
