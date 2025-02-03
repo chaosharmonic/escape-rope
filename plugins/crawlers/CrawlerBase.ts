@@ -26,7 +26,7 @@ export class CrawlerBase {
   //  (but for now it's probably fine)
   detectDuplicateJob(job, data) {
     // const options = {
-      // strict field checking?
+      // TODO: strict field checking?
     // }
 
     // NOTE: `job` is assumed to be a collected result, not
@@ -232,8 +232,7 @@ export class CrawlerBase {
   async fetchAllJobDetailPages(data, {
     maxRetries = 10,
     page,
-    parseFn,
-    writeFn
+    childInstance
   }) {
     let remaining = [ ...data ]
 
@@ -258,9 +257,12 @@ export class CrawlerBase {
         await delay(interval)
 
         if (!job.isNew) {
-          // TODO: merge options
+          // TODO: add merge options
           continue
         }
+        
+        // don't repeat successful calls
+        if (job.description) continue
 
         const { title, company } = job
 
@@ -271,7 +273,7 @@ export class CrawlerBase {
         try {
           const html = await this.fetchPage(retrievalLink, page)
 
-          const detail = parseFn(html)
+          const detail = childInstance.parseJobDetails(html)
           
           const { description } = detail
 
@@ -295,9 +297,9 @@ export class CrawlerBase {
         break
       }
 
-      writeFn(data)
-
       console.log(`completed attempt ${count}`, '\n')
+      
+      childInstance.writeResultsToJSON(data)
       
       if (count == maxRetries) break
 
