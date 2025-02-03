@@ -4,6 +4,7 @@ import 'dotenv/load'
 import { Application } from 'oak/application'
 import { Router } from 'oak/router'
 import jobsRouter from './routes/job.js'
+import settingsRouter from './routes/settings.js'
 
 const port = Deno.env.get('SERVER_PORT') ||
   3000
@@ -18,6 +19,7 @@ app.use((ctx, next) => {
 
 const router = new Router()
 
+router.use('/settings', settingsRouter.routes())
 router.use('/jobs', jobsRouter.routes())
 router.get('/', (ctx) => {
   ctx.response.body = 'good news everyone!'

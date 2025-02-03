@@ -75,6 +75,7 @@ export interface Interview {
   category: string // 'phone screen', 'technical', etc
   notes: string[] // Markdown
   questions: InterviewQuestion[]
+  interviewer: Person[]
 }
 
 export enum LifecycleStage {
@@ -195,4 +196,59 @@ export interface Company {
   // redFlags?: string[] // enum?
   // greenFlags?: string[] // enum?
   // outreach history?
+}
+
+// settings
+
+// this is a single, global structure
+// since the application is local-first, and built
+//  for me, it's primarily single-user
+
+export interface CoverLetter {
+  name?: string
+  text: string // should be Markdown
+}
+
+// TODO: type for levels?
+
+// this has layers to cover cases like
+//  hiring managers/reporting structures
+//  that might be in a job description,
+//  but are titles you'd otherwise filter
+// aimed at scraping use, but I might want
+//  to add levels of granularity to this later
+//  both at upload and for generally more
+//  configurable crawler behavior
+export interface Blocklist {
+  company?: string[] // for now
+  title?: string[]
+  description?: string[]
+  global?: string[]
+}
+
+// *but,* one person might have multiple job
+//  searches -- concurrently, or over time
+export interface Campaign {
+  name: string
+  // these are used as search fields
+  roles?: string[]
+  skills?: string[]
+  locations?: string[]
+  salary?: {
+    min: number,
+    max?: number
+  }
+  coverLetters?: CoverLetter[]
+  blocklist?: Blocklist
+}
+
+// global overrides
+// for instance, job searches would have specific
+//  title blocklists, while you might want to put
+//  generic titles for various levels here
+export interface Settings {
+  campaigns: Campaign[]
+  locations?: string[]
+  coverLetters?: CoverLetter[]
+  blocklist?: Blocklist
 }
