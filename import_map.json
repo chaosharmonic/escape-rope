@@ -3,7 +3,7 @@
     "async/": "jsr:/@std/async/",
     "collections/": "jsr:/@std/collections/",
     "datetime/": "jsr:/@std/datetime/",
-    "deno-dom/": "jsr:@b-fuze/deno-dom/",
+    "deno-dom/": "jsr:/@b-fuze/deno-dom/",
     "dotenv/": "jsr:/@std/dotenv/",
     "fs/": "jsr:/@std/fs/",
     "jsonfile/": "https://deno.land/x/jsonfile@1.0.0/",

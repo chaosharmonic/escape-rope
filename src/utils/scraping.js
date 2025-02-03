@@ -1,3 +1,4 @@
+import { filterValues } from 'collections/'
 import { launch, connect } from 'astral/'
 // TODO: import dynamically based on env
 import { DOMParser } from 'deno-dom/'
@@ -10,23 +11,29 @@ export const wsEndpoint = Deno.env.get('WS_ENDPOINT')
 const userAgent = ''
 const proxyServer = ''
 
-const windowSize = '--windowsize=1920,1080'
-// or, '--start-mazimized'
+const windowSize = [
+  '--windowsize=1920,1080',
+  '--start-mazimized'
+].at(Math.round(Math.random()))
+
+const args = wsEndpoint ? {
+  args: [
+    proxyServer && `--proxy-server=${proxyServer}`,
+    windowSize,
+    '--incognito' // FIXME: this has issues upstream
+  ].filter(e => e)
+} : {}
 
 const launchOptions = {
   userAgent,
   headless: false,
   defaultViewport: null,
-  args: [
-    proxyServer && `--proxy-server=${proxyServer}`,
-    windowSize,
-    '--incognito' // FIXME: this has issues upstream
-  ].filter(e => Boolean(e))
+  ...args
 }
 
 const connectOptions = {
-  userAgent,
-  wsEndpoint
+  wsEndpoint,
+  ...filterValues({ userAgent }, e => e)
 }
 
 export const setupBrowser = async () => wsEndpoint
