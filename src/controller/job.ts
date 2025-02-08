@@ -120,6 +120,15 @@ export const bulkAddJobPosts = async (jobs: JobPost[]) => {
   return result
 }
 
+// this is for the cover letter that you use
+// in theory, there should only be one
+export const saveCoverLetter = async (jobId: string, coverLetter: string) => {
+  const result = await db.jobs.update(jobId, { coverLetter })
+
+  return result
+}
+
+
 const setJobPostStatus = async (jobId: string, status: LifecycleStage) => {
   const result = await db.jobs.update(jobId, { lifecycle: status })
 
