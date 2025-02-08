@@ -14,6 +14,16 @@ const app = new Application()
 // TODO: find a better way to specify this, including localhost
 app.use((ctx, next) => {
   ctx.response.headers.set('Access-Control-Allow-Origin', '*')
+  ctx.response.headers.set(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept'
+  )
+  ctx.response.headers.set('Access-Control-Max-Age', 86400)
+  ctx.response.headers.set(
+    'Access-Control-Allow-Methods',
+    'POST, PUT, OPTIONS'
+  )
+
   return next()
 })
 
@@ -26,6 +36,7 @@ router.get('/', (ctx) => {
 })
 
 app.use(router.routes())
+app.use(router.allowedMethods())
 
 console.log(`listening on port ${port}`)
 
