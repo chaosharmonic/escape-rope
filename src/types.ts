@@ -5,8 +5,7 @@ export interface Person {
   title?: string
   email?: string
   linkedIn?: string
-  notes: string // Markdown
-  // ...other contact info? LinkedIn, phone
+  notes?: string[] | string // Markdown
   // contactHistory??
   // also this should account for personal outreach
   //  beyond just a loose "notes" field
@@ -31,7 +30,7 @@ export interface JobSearchParams { // more?
   searchTerms: string
   location: string
   maxAge?: number
-  salaryTarget?: number
+  salaryTarget?: number // TODO: update this
 }
 
 type JobSearchSource = SearchSource & {
@@ -44,38 +43,34 @@ type JobSearchSource = SearchSource & {
   // (not every platform exposes this if you're not logged in)
 }
 
+// TODO: name this better
 // interface Referral {
 //     company: string
 //     contact: Person
 //     internal?: Boolean
 // }
 
-// TODO: parse these from a Markdown file?
-//  take that file as an an upload
-// at least, *maybe*... eventually need to handle input
-//  sanitization for that but I should theoretically
-//  be doing that anyway... even if I could otherwise
-//  just scaffold them from a list of inputs
-//  given a set of default parameters
-// but, properly sanitized, separating by newline
-//  would be an easy way to setup scaffold a bunch of these
-// the other fields *do* all start blank...
 export interface InterviewQuestion {
-  isRecon: boolean // indicates that this question is mine
-  // (that name is temporary though)
+  isMine: boolean // name still might not be permanent
   question: string
-  answer: string // could include 'n/a' if not relevant
+  answer?: string // may be prepped in advance
+  // could include 'n/a' if not relevant
   // could be parsed during recon and not actually
   //  asked *during an interview*
   children?: InterviewQuestion[] // follow-up questions
+  // not implemented yet
 }
 
 export interface Interview {
-  round: number
+  round: number // can include 0 for recon
   category: string // 'phone screen', 'technical', etc
-  notes: string[] // Markdown
+  // TODO: make this configurable
+  // TODO: maybe add dates?
+  notes?: string[] | string // Markdown
   questions: InterviewQuestion[]
-  interviewer: Person[]
+  interviewer?: Person[] // for technical rounds,
+  // strictly speaking the interviewer doesn't exist
+  // this is also a useful distinction for recon
 }
 
 export enum LifecycleStage {
@@ -110,7 +105,8 @@ export interface JobPost {
   title: string
   company: string
   location?: string
-  notes?: string[] // Markdown
+  notes?: string[] | string // Markdown
+  // ASK: can I set a default value for this?
   sources: JobSearchSource[]
   // prune all posts >90 days old and not at least swiped right
   //  (that date should be user-configurable)
@@ -138,7 +134,7 @@ export interface JobPost {
   summary?: string
   description?: string
   interviews?: {
-    totalRounds: number
+    totalRounds?: number // might not be known up front
     details: Interview[]
   }
 }
@@ -204,7 +200,9 @@ export interface Company {
 // since the application is local-first, and built
 //  for me, it's primarily single-user
 
-export interface CoverLetter {
+// NOTE: this is *not* used above, because for a tailored
+//  cover letter you're ultimately only sending one
+export interface CoverLetterTemplate {
   name?: string
   text: string // should be Markdown
 }
@@ -236,19 +234,22 @@ export interface Campaign {
   locations?: string[]
   salary?: {
     min: number,
+    target?: number,
     max?: number
   }
-  coverLetters?: CoverLetter[]
+  coverLetters?: CoverLetterTemplate[]
+  defaultInterviewQuestions: string[]
   blocklist?: Blocklist
 }
 
 // global overrides
-// for instance, job searches would have specific
-//  title blocklists, while you might want to put
-//  generic titles for various levels here
+// for instance, you might want title level
+//  blocklists for a given job search, but
+//  globals for companies
 export interface Settings {
   campaigns: Campaign[]
   locations?: string[]
-  coverLetters?: CoverLetter[]
+  coverLetters?: CoverLetterTemplate[]
+  defaultInterviewQuestions: String[]
   blocklist?: Blocklist
 }
