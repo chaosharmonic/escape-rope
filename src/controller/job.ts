@@ -1,4 +1,5 @@
 import { JobPost, LifecycleStage } from '../types.ts'
+import * as settingsController from './settings.ts'
 import { db } from '../db.ts'
 
 export const addNewJobPost = async (job: JobPost) => {
@@ -103,7 +104,14 @@ export const addNewJobPost = async (job: JobPost) => {
     console.log({ id, sources })
 
     // TODO: merge any new data into the update
-    return await db.jobs.update(id, { sources })
+    try {
+      return await db.jobs.update(id, { sources })
+    } catch(err) {
+      // TODO: figure out what's causing this "too large" error
+      //  (see chat logs and docs)
+      console.error(err.message)
+      return {id: err.message}
+    }
   }
 
   return await db.jobs.add({ ...job, lifecycle: 'queued' })
@@ -122,7 +130,10 @@ export const bulkAddJobPosts = async (jobs: JobPost[]) => {
 
 // this is for the cover letter that you use
 // in theory, there should only be one
-export const saveCoverLetter = async (jobId: string, coverLetter: string) => {
+export const saveCoverLetter = async (
+  jobId: string,
+  coverLetter: string
+) => {
   const result = await db.jobs.update(jobId, { coverLetter })
 
   return result
@@ -163,8 +174,48 @@ export const flagShortlistedJobPost = async (jobId: string) =>
 
 export const flagAppliedJobPost = async (jobId: string) =>
   await setJobPostStatus(jobId, 'applied')
-export const flagInterviewingJobPost = async (jobId: string) =>
-  await setJobPostStatus(jobId, 'interview')
+
+export const flagInterviewingJobPost = async (jobId: string) => {
+  // TODO: setup *some* initial interview template
+
+  const { value: settings } = await settingsController.getSettings()
+
+  const campaign = settings.campaigns.at(0)
+
+  const globalDefaults = settings.defaultInterviewQuestions || []
+  const campaignDefaults = campaign.defaultInterviewQuestions || []
+
+  const defaultInterviewQuestions = [
+    ...globalDefaults,
+    ...campaignDefaults
+  ].map(question => ({ question, isMine: true }))
+
+  const initInterview = {
+    type: 'HR Screen',
+    interviewer: {
+      name: 'Hermes Conrad',
+      title: 'Chief Bureaucrat'
+      // email
+      // linkedin
+      // this should maybe be an object,
+      //  w `url` and `headline` and maybe more
+      // otherDetails
+    },
+    // interviewer
+    questions: defaultInterviewQuestions
+  }
+
+  const result = await db.jobs.update(jobId, {
+    lifecycle: 'interview',
+    interviews: [ initInterview ]
+    // draft.
+    // FIXME: use correct types
+    // (also, acutally enforce types)
+  })
+
+  return result
+}
+
 export const flagOfferedJobPost = async (jobId: string) =>
   await setJobPostStatus(jobId, 'offer')
 export const flagHiredJobPost = async (jobId: string) =>
@@ -181,6 +232,28 @@ export const flagGhostedJobPost = async (jobId: string) =>
   await setJobPostStatus(jobId, 'ghosted')
 export const flagRescindedJobPost = async (jobId: string) =>
   await setJobPostStatus(jobId, 'rescinded')
+
+export const updateInterview = async (
+  jobId: string,
+  round: number,
+  interview: Interview
+) => {
+  const { value: { interviews } } = await db.jobs.find(jobId)
+
+  // const questions = interview.questions
+  //   .map(q => filterValues(v => v))
+
+  const next = interviews.toSpliced(round, 1, {
+    ...interview,
+    // questions
+  })
+
+  const result = await db.jobs.update(jobId, {
+    interviews: next
+  }, { strategy: 'merge-shallow' })
+
+  return result
+}
 
 export const getAllJobs = async () => {
   const { result: jobs } = await db.jobs.getMany()

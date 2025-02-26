@@ -121,6 +121,24 @@ jobsRouter.put('/:jobId/cover_letter', async (ctx) => {
     .saveCoverLetter(jobId, coverLetter)
 })
 
+jobsRouter.put('/:jobId/interviews/:round', async (ctx) => {
+  // TODO: decide whether this needs its own controller method
+
+  // payload = formdata
+  const { jobId, round } = ctx.params
+
+  const payload = await ctx.request.body.json()
+  console.log({payload})
+  
+  const result = await jobsController.updateInterview(
+    jobId,
+    round,
+    payload
+  )
+
+  ctx.response.body = result
+})
+
 jobsRouter.post('/upload', async (ctx) => {
   // TODO: handle alternate request methods
   //  this *could* still be directly sent as JSON
