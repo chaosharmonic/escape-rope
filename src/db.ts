@@ -1,6 +1,7 @@
 import { collection, kvdex, model } from 'kvdex/'
 import { Company, JobPost, Settings } from './types.ts'
 import 'dotenv/load'
+import { initSettings } from '../config/init.js'
 
 const filename = Deno.env.get('DB_FILENAME') || ''
 
@@ -17,16 +18,15 @@ export const db = kvdex({
 
 // check for settings and init them if none exist
 
-const { result: settings } = await db.settings.getMany()
+const settings = await db.settings.getOne()
+  .then(v => v?.value)
 
-if (!settings.length) {
-  const defaultSettings = {
-    campaigns: [{
-      name: 'default'
-    }]
-  }
+console.log({ settings })
 
-  await db.settings.add(defaultSettings)
+if (!settings) {
+  await db.settings.add(initSettings)
+
+  console.log({ initSettings })
 }
 
 // TODO: fix this

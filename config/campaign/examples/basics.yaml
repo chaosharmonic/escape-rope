@@ -1,0 +1,21 @@
+name: Default
+pay:
+  min: 50000
+  max: 200000
+roles:
+  - 
+skills:
+  - Delivery
+  - Spacecraft Piloting
+  - Holofonr
+locations:
+  - New New York
+
+# NOTE:
+# You will not find actual results with this,
+#  and *should* customize it, especially if
+#  running on your own device (or care about
+#  cost for a third party service)
+# But even just to cut noise out of your swipes
+#  you ideally want to limit extraneous results
+#  that you're making requests against
