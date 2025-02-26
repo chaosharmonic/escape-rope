@@ -19,7 +19,22 @@ settingsRouter.post('/', async (ctx) => {
 
   ctx.response.body = res
 })
-  
+
+settingsRouter.put('/campaign/basic_details', async (ctx) => {
+  const payload = await ctx.request.body.formData()
+
+  const data = Object.fromEntries(payload.entries())
+
+  const update = Object.entries(data)
+    .map(([ k, v ]) => ({ [k]: JSON.parse(v) }))
+    .reduce( ( a, b ) => ({ ...a, ...b }) )
+
+  const res = await settingsController
+    .updateBasicCampaignSettings({ ...update }, 'default')
+
+  ctx.response.body = res
+})
+
 // TODO: route params
 // (when I get to support for multiple searches)
 // (*maybe* break these out into their own model)
@@ -35,11 +50,12 @@ settingsRouter.put('/campaign/cover_letters', async (ctx) => {
 })
 
 settingsRouter.put('/campaign/blocklist', async (ctx) => {
-  // this can *definitely* be formdata
-  const payload = await ctx.request.body.json()
+  const payload = await ctx.request.body.formData()
+
+  const blocklist = JSON.parse(payload.get('blocklist'))
 
   const res = await settingsController
-    .updateCoverLetters({ ...payload }, 'default')
+    .updateBlocklist({ ...blocklist }, 'default')
 
   ctx.response.body = res
 })

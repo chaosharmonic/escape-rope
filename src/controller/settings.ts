@@ -24,8 +24,8 @@ const updatePartialSettings = async (
     campaignName: string = 'user'
 ) => {
     const { value: settings } = await db.settings.getOne()
-    
-    console.log({campaignName})
+
+    // console.log({campaignName})
 
     if (campaignName == 'user') {
         return await db.settings.updateOne({ ...newSetting })
@@ -52,6 +52,19 @@ const updatePartialSettings = async (
 const updateSingleGlobalSetting = async (newSetting) =>
     await updatePartialSettings({ ...newSetting })
 
+export const updateBasicCampaignSettings = async (
+    basicCampaignSettings: string[],
+    campaignName: string = 'user'
+) => {
+    if (campaignName == 'user') {
+        // return 
+    }
+
+    return await updatePartialSettings({
+        ...basicCampaignSettings
+    }, campaignName)
+}
+
 export const updateCoverLetters = async (
     coverLetters: CoverLetterTemplate[],
     campaignName: string = 'user'
@@ -73,12 +86,12 @@ export const updateBlocklist = async (
 ) => {
     if (campaignName == 'user') {
         return await updateSingleGlobalSetting({
-            ...blocklist
+            blocklist
         })
     }
 
     return await updatePartialSettings({
-        ...blocklist
+        blocklist
     }, campaignName)
 }
 
