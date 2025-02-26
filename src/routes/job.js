@@ -80,6 +80,11 @@ jobsRouter.post('/:jobId/applied', async (ctx) => {
   ctx.response.body = await jobsController.flagAppliedJobPost(jobId)
 })
 
+jobsRouter.post('/:jobId/rejected', async (ctx) => {
+  const { jobId } = ctx.params
+  ctx.response.body = await jobsController.flagRejectedJobPost(jobId)
+})
+
 jobsRouter.post('/:jobId/interview', async (ctx) => {
   const { jobId } = ctx.params
   ctx.response.body = await jobsController.flagInterviewingJobPost(jobId)
