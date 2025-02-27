@@ -1,7 +1,7 @@
 import { delay } from 'async/delay'
 import { ensureDirSync } from 'fs/'
 import { writeJsonSync } from 'jsonfile/mod.ts'
-import { flagForbiddenWords } from '../../src/utils/cleanup.js'
+// import { flagForbiddenWords } from '../../src/utils/cleanup.js'
 import {
   fetchHTML,
   getRandomMilliseconds,
@@ -9,16 +9,51 @@ import {
 } from '../../src/utils/scraping.js'
 import { getAllJobs } from '../../src/controller/job.ts'
 import { html2md } from '../../src/utils/cleanup.js'
+import { getSettings } from '../../src/controller/settings.ts'
 
 // TODO: add some structure for setting up data types
 // expected and optional details
 
+const settings = await getSettings()
+  .then(r => r?.value)
+
+// NOTE: maybe temporary. Its predecessor was a utility
+//  function, but at the time it was only being used for the
+//  crawlers. Could move back if that changes.
+const checkBlocklist = (job, section) =>{
+  // TODO: see every other note about updating this
+  const campaign = settings.campaigns.at(0)
+
+  const blocklist = [settings.blocklist, campaign.blocklist]
+    .reduce((a = {}, b = {}) => {
+      for (let key of Object.keys(a)) {
+        b[key].push(...a[key])
+      }
+
+      return b
+    })
+
+  return blocklist[section].every((w) => {
+    const target = section == 'global'
+    ? JSON.stringify(job)
+    : job[section]
+
+    const [ text, source ] = [ w, target ]
+      .map(str => str
+        ?.toLowerCase()
+        ?.replace(/\W/g, ' '))
+
+    return !source.includes(text)
+      && !source.split(' ').includes(text)
+  })
+}
 // WIP
 export class CrawlerBase {
   contructor(retrievalDate = new Date(), searchParams, browserOptions) {
     this.retrievalDate = retrievalDate
     
     this.searchParams = searchParams || {}
+    // this.userSettings = settings
     // this.browserOptions = browserOptions || {}
   }
 
@@ -40,11 +75,12 @@ export class CrawlerBase {
       const links = e.sources?.map(s => s.retrievalLink)
         ?? e.retrievalLinks
         ?? []
-      
+
       // this assumes you're sanitizing links to avoid things
       //  like unique session IDs
       if (links.includes(retrievalLink)) return true
 
+      // TODO: finish implementing this
       // check that pay ranges match, only if it exists on both
       const payMatches = !(e.pay && job.pay) || (
         e.pay.type == job.pay.type
@@ -112,7 +148,8 @@ export class CrawlerBase {
       ])
       
       const passesFilters = [
-        flagForbiddenWords(r, 'title'),
+        checkBlocklist(r, 'title'),
+        checkBlocklist(r, 'company'),
         !baseURL || originsMatch
       ].every((e) => e)
       
@@ -282,6 +319,8 @@ export class CrawlerBase {
           detail.description = await html2md(description)
 
           for (let [k, v] of Object.entries(detail)) job[k] ||= v
+
+          childInstance.writeResultsToJSON(data)
         } catch(e) {
           console.error('fetch failed!')
           console.error(e.message)
@@ -298,9 +337,6 @@ export class CrawlerBase {
       }
 
       console.log(`completed attempt ${count}`, '\n')
-      
-      childInstance.writeResultsToJSON(data)
-      
       if (count == maxRetries) break
 
       await delay(300 * 1000)
