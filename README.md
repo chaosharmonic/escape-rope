@@ -16,9 +16,8 @@ to evaluate what other tools I might want to build around it, or how I might
 integrate them.
 
 There's a first draft of the UI
-[here](https://github.com/chaosharmonic/escape-rope-ui). Note that I don't have
-test data or other niceties that would actually make this demo-ready yet.
-
+[here](https://github.com/chaosharmonic/escape-rope-ui). Still working on getting
+a demo deploy up.
 ## Why? (Goals and non-goals)
 
 Primarily, it's a tool I've been building for me -- as an experiment, a learning
@@ -32,12 +31,10 @@ that one ever throws me into a ditch. Or, say, threatens a "slow climb 🧗" in
 public settings.
 
 I _hope_ maybe someone else finds it helpful, but its core purpose is to make my
-life easier. I'm not necessarily prioritizing things outside what I strictly
-need for local use, so while I'm considering how I might eventually deploy this
-for demo purposes, I'm not necessarily putting heavy priority on things like
-user config or auth in the short term. I have a loose "roadmap" of other parts
-of this process that I want to automate, but I'm working on it in stages and
-trying not to put more effort into building it than I am into using it.
+life easier. It runs locally  first, and isn't heavily focused on features like
+auth. (At least not until maybe my second draft.) I have a loose "roadmap" of
+other parts of this process that I want to automate, but I'm working on this in
+stages and trying not to put more effort into building it than I am into using it.
 
 That said, part of removing tedium here is to keep the project as self-contained
 as possible -- using what comes out of the box first, and then leaning on
@@ -61,13 +58,50 @@ so you don't need to install any of them up front.
 
 ### Usage
 
-To run the API server: `deno run serve`
+#### API
+
+To run the backnd: `deno run serve`
+
+Aside from [the UI](https://github.com/chaosharmonic/escape-rope-ui), you can
+also declare initial settings using config files in `config/campaign.` by
+copying the ones in the `examples` folder and edit them with your own
+preferences.
+
+<!-- TODO: simplify this explanation, this API, or both -->
+The API supports uploading jobs by making a POST request, sending JSON files
+as FormData.
+
+A minimal representation of the structure would look like:
+
+```jsonc
+{
+    "jobs": [
+        {
+            "title": "Spooky Greeter",
+            "company": "Applied Cryogenics"
+            // other fields optional
+        },
+        // more...
+    ],
+    // that said, this whole thing is optional
+    "source": {
+        "name": "user upload", // linkedin, etc
+        "retrievalDate": "01-01-3000"
+        // proper, formatted date here
+    }
+}
+```
+
+#### Crawlers
 
 The core scraping workflow is, similiarly, built around Deno's standard task
-runner -- currently I'm leveraging this for gathering new listings, but I'm in
-the process of redesigning the crawlers into something more extensible.
+runner -- tasks are defined in `deno.jsonc` and run using `deno run {name}`.
+I'm still redesigning the overall handling of datasources to be more friendly
+to extension, but for now there's a base class that contains the core
+functionality and a sample available of how to extend it.
 
-Tasks are defined in `deno.jsonc` and run using `deno run {name}`
+Accordingly, they aren't really covered by the API yet. That said, the tracker
+runs independently, and you can upload results from other workflows like it.
 
 I've left the one to get "who is hiring" threads from a Hacker News API intact,
 for example's sake. But it's not going to give you structured responses, and is
