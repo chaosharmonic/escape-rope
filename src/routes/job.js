@@ -158,11 +158,14 @@ jobsRouter.post('/upload', async (ctx) => {
       return JSON.parse(j)
     })
 
+  const retrievalDate = data?.source?.retrievalDate
+  || new Date()
+
   const {
     jobs,
     source = {
       name: 'user upload',
-      retrievalDate: new Date()
+      retrievalDate
     }
   } = data
 
