@@ -13,10 +13,8 @@ automate more of this process. Varying ideas I've been throwing around include:
 
 - tracking interactions with a company over time, referrals, etc
   - automating basic recon on companies that I'm potentially interested in
-- cover letter generation
-- a frontend loosely resembling Tinder for "swiping" through results (partially
-  implemented; repo link in README)
-- interview tracking
+- a frontend loosely resembling Tinder for "swiping" through results (repo link
+  in README)
 - tracking for multiple job searches
 - a plugin system for new data sources
 
@@ -25,10 +23,10 @@ _isn't_ a product.
 
 There's also a base for the crawlers and a couple of examples. Your parsing
 logic may vary, but the idea is that now the parsing logic is separated out from
-the fetching logic, so you can setup a data source from an arbitrary source -- a
-bare request handler like `curl`, other crawlers, a browser extension, etc --
-and parse it server-side. I'm still not sure exactly how I want to handle
-configuring data sources overall, but the goal is to enable a variety of
+the fetching logic, so you can setup a data source from any arbitrary means of
+getting HTML -- a bare request handler like `curl`, other crawlers, a browser
+extension, etc -- and parse it server-side. I'm still not sure exactly how I want
+to handle configuring data sources overall, but the idea is to enable a variety of
 different ways of going about this.
 
 ## Why? (Goals and non-goals)
@@ -43,8 +41,7 @@ exercise, and a tech demo to show off to anyone that it's aided me in connecting
 with. It's still not the _most_ efficient way of doing this, necessarily -- I
 know there's a scattering of platforms with more modern ways of streamlining
 this process than what's offered by traditional job boards -- but I believe that
-there's value in
-[building the things you want to use](https://bhmt.dev/blog/diy).
+there's value in [building the things you want to use](https://bhmt.dev/blog/diy).
 
 As for why it's not more than that:
 
