@@ -1,7 +1,7 @@
 import { delay } from 'async/delay'
+import { filterValues } from 'collections/'
 import { ensureDirSync } from 'fs/'
 import { writeJsonSync } from 'jsonfile/mod.ts'
-// import { flagForbiddenWords } from '../../src/utils/cleanup.js'
 import {
   fetchHTML,
   getRandomMilliseconds,
@@ -17,9 +17,11 @@ import { getSettings } from '../../src/controller/settings.ts'
 const settings = await getSettings()
   .then(r => r?.value)
 
-// NOTE: maybe temporary. Its predecessor was a utility
-//  function, but at the time it was only being used for the
-//  crawlers. Could move back if that changes.
+// NOTE:
+// undecided on whether this will stay here
+// its predecessor was a utility function, but at the
+//  time it was only being used for the crawlers anyway
+// could move back if that changes
 const checkBlocklist = (job, section) =>{
   // TODO: see every other note about updating this
   const campaign = settings.campaigns.at(0)
@@ -47,11 +49,17 @@ const checkBlocklist = (job, section) =>{
       && !source.split(' ').includes(text)
   })
 }
+
 // WIP
 export class CrawlerBase {
-  contructor(retrievalDate = new Date(), searchParams, browserOptions) {
+  contructor(
+    retrievalDate = new Date(),
+    searchParams,
+    sourceName,
+    browserOptions = {}
+  ) {
     this.retrievalDate = retrievalDate
-    
+    this.sourceName = sourceName || ''
     this.searchParams = searchParams || {}
     // this.userSettings = settings
     // this.browserOptions = browserOptions || {}
@@ -150,6 +158,7 @@ export class CrawlerBase {
       const passesFilters = [
         checkBlocklist(r, 'title'),
         checkBlocklist(r, 'company'),
+        // checkBlocklist(r, 'global'). TODO: check this
         !baseURL || originsMatch
       ].every((e) => e)
       
@@ -227,13 +236,17 @@ export class CrawlerBase {
 
   // NOTE: `.` here is relative to your cwd
   //  *NOT* other imports!
-  writeResultsToJSON(data, outputDir = './data') {
+  writeResultsToJSON(data) {
+    const outputData = this.cleanupJobsData(data)
+    
+    const outputDir = `./data/${this.sourceName.toLowerCase()}`
+
     ensureDirSync(outputDir)
     
     const formattedDate = this.retrievalDate.toISOString()
     const filename = `${outputDir}/${formattedDate}.json`
 
-    writeJsonSync(filename, data, { spaces: 2 })
+    writeJsonSync(filename, outputData, { spaces: 2 })
   }
 
   // extension or automation
@@ -269,7 +282,7 @@ export class CrawlerBase {
   async fetchAllJobDetailPages(data, {
     maxRetries = 10,
     page,
-    childInstance
+    parseDetails
   }) {
     let remaining = [ ...data ]
 
@@ -310,7 +323,7 @@ export class CrawlerBase {
         try {
           const html = await this.fetchPage(retrievalLink, page)
 
-          const detail = childInstance.parseJobDetails(html)
+          const detail = parseDetails(html)
           
           const { description } = detail
 
@@ -320,7 +333,7 @@ export class CrawlerBase {
 
           for (let [k, v] of Object.entries(detail)) job[k] ||= v
 
-          childInstance.writeResultsToJSON(data)
+          this.writeResultsToJSON(data)
         } catch(e) {
           console.error('fetch failed!')
           console.error(e.message)
@@ -344,12 +357,6 @@ export class CrawlerBase {
 
     return data
   }
-
-  // extension or automation
-  // parse an HTML string and return detailed metadata
-  // this is defined in child classes
-  // parseJobDetails(html) {
-  // }
 
   // util
   compareOrigins(links) {
@@ -380,11 +387,63 @@ export class CrawlerBase {
 
     return redirect
   }
+
+  // TODO: rename this
+  cleanupJobsData(data) {
+    const companies = [
+      ...new Set(data.map((r) => r.company.name || r.company))
+    ]
+    // TODO: figure out extracting company details
+      // .map((c) => {
+      //   const { companyProfileLink: link } = data
+      //     .find((r) => r.company == c)
+
+      //   return { name: c, link }
+      // })
+
+    const jobs = data.map((r) => {
+      const {
+        title,
+        company,
+        location,
+        retrievalLinks,
+        redirectLink: applyLink,
+        pay,
+        summary,
+        description
+      } = r
+
+      const optionalResults = filterValues({
+        pay,
+        summary,
+        description,
+        applyLink
+      }, (v) => v)
+
+      return {
+        title,
+        company: company.name || company,
+        location,
+        ...optionalResults,
+        retrievalLinks
+      }
+    })
+
+    const { retrievalDate, searchParams } = this
+
+    const source = {
+      name: this.sourceName,
+      retrievalDate,
+      searchParams,
+    }
+
+    return { companies, jobs, source }
+  }
 }
 
 export class PaginatedList extends CrawlerBase {
-  constructor(retrievalDate, searchParams, browserOptions) {
-    super(retrievalDate, searchParams, browserOptions)
+  constructor(retrievalDate, searchParams, sourceName, browserOptions) {
+    super(retrievalDate, searchParams, sourceName, browserOptions)
   }
 
   // scraping methods
@@ -405,12 +464,12 @@ export class PaginatedList extends CrawlerBase {
 
 
 export class InfiniteScroller extends CrawlerBase { 
-  constructor(retrievalDate, searchParams, browserOptions) {
-    super(retrievalDate, searchParams, browserOptions)
+  constructor(retrievalDate, searchParams, sourceName, browserOptions) {
+    super(retrievalDate, searchParams, sourceName, browserOptions)
   }
 
   /*
-  // TODO: handle getting checkCompleted from a child class
+  // TODO: handle getting checkCompleted from a child class?
   handleInfiniteScroll(page) {
     
   }
