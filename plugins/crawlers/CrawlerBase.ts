@@ -54,13 +54,11 @@ const checkBlocklist = (job, section) =>{
 export class CrawlerBase {
   contructor(
     retrievalDate = new Date(),
-    searchParams,
-    sourceName,
+    searchParams = {},
     browserOptions = {}
   ) {
     this.retrievalDate = retrievalDate
-    this.sourceName = sourceName || ''
-    this.searchParams = searchParams || {}
+    this.searchParams = searchParams
     // this.userSettings = settings
     // this.browserOptions = browserOptions || {}
   }
@@ -130,9 +128,9 @@ export class CrawlerBase {
       const existingResult = this.detectDuplicateJob(b, a)
 
       if (existingResult) {
-        existingResult.retrievalLinks.push(retrievalLink)
-        
         const { retrievalLinks: links } = existingResult
+        
+        links.push(retrievalLink)
 
         existingResult.retrievalLinks = [...new Set(links)]
 
@@ -184,7 +182,7 @@ export class CrawlerBase {
       const saved = this.detectDuplicateJob(job, savedResults)
 
       // TODO: only skip if there's a JD
-      const isNew = !saved//?.description
+      const isNew = !saved?.description
 
       return {...job, isNew}
     })
@@ -236,10 +234,10 @@ export class CrawlerBase {
 
   // NOTE: `.` here is relative to your cwd
   //  *NOT* other imports!
-  writeResultsToJSON(data) {
-    const outputData = this.cleanupJobsData(data)
+  writeResultsToJSON(data, sourceName: string) {
+    const outputData = this.cleanupJobsData(data, sourceName)
     
-    const outputDir = `./data/${this.sourceName.toLowerCase()}`
+    const outputDir = `./data/${sourceName.toLowerCase()}`
 
     ensureDirSync(outputDir)
     
@@ -282,7 +280,8 @@ export class CrawlerBase {
   async fetchAllJobDetailPages(data, {
     maxRetries = 10,
     page,
-    parseDetails
+    parseDetails,
+    sourceName = 'sample'
   }) {
     let remaining = [ ...data ]
 
@@ -313,27 +312,25 @@ export class CrawlerBase {
         
         // don't repeat successful calls
         if (job.description) continue
-
         const { title, company } = job
-
+        
         console.log(`Getting result ${i + 1}: ${title} at ${company.name || company}`)
-
+        
         const [ retrievalLink ] = job.retrievalLinks
-
+        
         try {
           const html = await this.fetchPage(retrievalLink, page)
-
           const detail = parseDetails(html)
           
           const { description } = detail
 
           if (!description) throw new Error("Couldn't parse details")
-
+          
           detail.description = await html2md(description)
-
+          
           for (let [k, v] of Object.entries(detail)) job[k] ||= v
 
-          this.writeResultsToJSON(data)
+          this.writeResultsToJSON(data, sourceName)
         } catch(e) {
           console.error('fetch failed!')
           console.error(e.message)
@@ -389,17 +386,15 @@ export class CrawlerBase {
   }
 
   // TODO: rename this
-  cleanupJobsData(data) {
-    const companies = [
+  cleanupJobsData(data, sourceName: string) {
+    const companies = data.companies || [
       ...new Set(data.map((r) => r.company.name || r.company))
-    ]
-    // TODO: figure out extracting company details
-      // .map((c) => {
-      //   const { companyProfileLink: link } = data
-      //     .find((r) => r.company == c)
+    ].map((c) => {
+      const { companyProfileLink: link } = data
+        .find((r) => r.company == c)
 
-      //   return { name: c, link }
-      // })
+      return { name: c, link }
+    })
 
     const jobs = data.map((r) => {
       const {
@@ -410,14 +405,16 @@ export class CrawlerBase {
         redirectLink: applyLink,
         pay,
         summary,
-        description
+        description,
+        hiringManager
       } = r
 
       const optionalResults = filterValues({
         pay,
         summary,
         description,
-        applyLink
+        applyLink,
+        hiringManager,
       }, (v) => v)
 
       return {
@@ -432,7 +429,7 @@ export class CrawlerBase {
     const { retrievalDate, searchParams } = this
 
     const source = {
-      name: this.sourceName,
+      name: sourceName,
       retrievalDate,
       searchParams,
     }
@@ -442,40 +439,83 @@ export class CrawlerBase {
 }
 
 export class PaginatedList extends CrawlerBase {
-  constructor(retrievalDate, searchParams, sourceName, browserOptions) {
-    super(retrievalDate, searchParams, sourceName, browserOptions)
+  constructor(retrievalDate, searchParams, browserOptions) {
+    super(retrievalDate, searchParams, browserOptions)
   }
 
   // scraping methods
   // these take a `page` argument
   // referencing the object from `astral`
 
-  /*
   // TODO: figure out breaking this out from the child class
   //  some stuff w nextPage detection needs to change
-  async fetchJobResults(page) {
+  async fetchJobResults(page, getNextPageURL) {
+    console.log('Getting initial results...')
+    
+    const pages = []
+    
+    // TODO: handle this later
+    // const isExtension = Boolean(!page)
+    
+    // run doc query directly if extension
+    let pageContents = await page
+      .evaluate(() => document.body.innerHTML)
+    
+    pages.push(pageContents)
+    
+    // attempt to use browser document if running in extension
+    
+    let pageNumber = 1
+    
+    let nextPageURL = getNextPageURL(pageContents)
+    console.log({nextPageURL})
+    
+    while (nextPageURL) {
+      // const interval = getRandomMilliseconds(150, 30)
+      const interval = getRandomMilliseconds(40, 10)
+      console.log(`waiting ${interval / 1000} seconds...`, '\n')
+      
+      await delay(interval)
+      
+      pageNumber++
+      console.log(`getting results for page ${pageNumber}...`)
+      
+      try {
+        // TODO: some kind of param for fetch/goto/other methods
+        
+        // pageContents = await fetchHTML(nextPageURL)
+        
+        await page.goto(nextPageURL)
+        
+        pageContents = await page
+          .evaluate(() => document.body.innerHTML)
+        
+        pages.push(pageContents)
+        
+        nextPageURL = getNextPageURL(pageContents)
+      } catch(e) {
+        console.error(e)
+        console.error("couldn't get next page", '\n')
+        break
+      }
+    }
+
+    return pages
   }
-  
-  // this could be a link, or a button
-  getNextPage() {
-  }
-  */
 }
 
 
 export class InfiniteScroller extends CrawlerBase { 
-  constructor(retrievalDate, searchParams, sourceName, browserOptions) {
-    super(retrievalDate, searchParams, sourceName, browserOptions)
+  constructor(retrievalDate, searchParams, browserOptions) {
+    super(retrievalDate, searchParams, browserOptions)
   }
 
+
+}
+
   /*
-  // TODO: handle getting checkCompleted from a child class?
   handleInfiniteScroll(page) {
     
   }
   
-  checkCompleted(doc) {
-    
-  }
   */
-}
