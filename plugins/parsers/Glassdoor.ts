@@ -1,4 +1,4 @@
-import { getDOMQueryResults, parseHTML } from '../../src/utils/scraping'
+import { getDOMQueryResults, parseHTML } from '../../src/utils/scraping.js'
 
 // const baseURL = 'https://www.glassdoor.com'
 
