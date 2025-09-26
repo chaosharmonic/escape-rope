@@ -3,7 +3,6 @@ import { filterValues } from 'collections/'
 import { ensureDirSync } from 'fs/'
 import { writeJsonSync } from 'jsonfile/mod.ts'
 import {
-  fetchHTML,
   getRandomMilliseconds,
   setupBrowser
 } from '../../src/utils/scraping.js'
@@ -52,15 +51,16 @@ const checkBlocklist = (job, section) =>{
 
 // WIP
 export class CrawlerBase {
-  contructor(
+  constructor(
     retrievalDate = new Date(),
     searchParams = {},
     browserOptions = {}
+    // TODO: crawler options... auto-upload, request type, etc
   ) {
     this.retrievalDate = retrievalDate
     this.searchParams = searchParams
-    // this.userSettings = settings
-    // this.browserOptions = browserOptions || {}
+    // this.browserOptions = browserOptions
+    // this.userSettings = settings // TODO: handle filters
   }
 
   // TODO: this actaully should be a util for server-side use
@@ -232,6 +232,7 @@ export class CrawlerBase {
     return { min, ...detail }
   }
 
+
   // NOTE: `.` here is relative to your cwd
   //  *NOT* other imports!
   writeResultsToJSON(data, sourceName: string) {
@@ -258,12 +259,12 @@ export class CrawlerBase {
     // const utils =
     //   `const fetchHTML = ${fetchHTML.toString()}`
     // pass into fn
-    return await page.evaluate(async (l) => {
+    return await page.evaluate(async (link) => {
       // TODO: figure out loading this as a script
       const fetchHTML = (url) => fetch(url)
         .then(r => r.text())
       
-      return await fetchHTML(l)
+      return await fetchHTML(link)
     }, { args: [ link ] })
 
     // if fetch is blocked
@@ -275,6 +276,18 @@ export class CrawlerBase {
     // TODO: options for other server-side tools...
     //  `curl-impersonate`?
     //  `page.goto`
+  }
+
+  async getPageContents(page) {
+    return await page.evaluate(() => document.body.innerHTML)
+  }
+
+  async getFullPageContents(page) {
+    return await page.evaluate(() => [
+      document.head.innerHTML,
+      `\n`,
+      document.body.innerHTML,
+    ].join(''))
   }
 
   async fetchAllJobDetailPages(data, {
@@ -329,7 +342,6 @@ export class CrawlerBase {
           detail.description = await html2md(description)
           
           for (let [k, v] of Object.entries(detail)) job[k] ||= v
-
           this.writeResultsToJSON(data, sourceName)
         } catch(e) {
           console.error('fetch failed!')
@@ -458,8 +470,7 @@ export class PaginatedList extends CrawlerBase {
     // const isExtension = Boolean(!page)
     
     // run doc query directly if extension
-    let pageContents = await page
-      .evaluate(() => document.body.innerHTML)
+    let pageContents = await this.getPageContents(page)
     
     pages.push(pageContents)
     
@@ -471,7 +482,6 @@ export class PaginatedList extends CrawlerBase {
     console.log({nextPageURL})
     
     while (nextPageURL) {
-      // const interval = getRandomMilliseconds(150, 30)
       const interval = getRandomMilliseconds(40, 10)
       console.log(`waiting ${interval / 1000} seconds...`, '\n')
       
@@ -482,13 +492,11 @@ export class PaginatedList extends CrawlerBase {
       
       try {
         // TODO: some kind of param for fetch/goto/other methods
-        
         // pageContents = await fetchHTML(nextPageURL)
         
         await page.goto(nextPageURL)
         
-        pageContents = await page
-          .evaluate(() => document.body.innerHTML)
+        pageContents = await this.getPageContents(page)
         
         pages.push(pageContents)
         
@@ -497,11 +505,11 @@ export class PaginatedList extends CrawlerBase {
         console.error(e)
         console.error("couldn't get next page", '\n')
         break
+        }
       }
-    }
 
-    return pages
-  }
+      return pages
+    }
 }
 
 
@@ -510,12 +518,89 @@ export class InfiniteScroller extends CrawlerBase {
     super(retrievalDate, searchParams, browserOptions)
   }
 
-
-}
-
-  /*
-  handleInfiniteScroll(page) {
+  async dismissModal(page, closeButtonSelector = '') {
+    // TODO:
+    // press escape
+    // if still there...
     
+    // select button and click
+    await page.evaluate((selector) => {
+      document.querySelector(selector)?.click()
+    }, { args: [ closeButtonSelector ] })
+  }
+
+  async getMoreResults(page, getMoreSelector = '') {
+    const timeout = getRandomMilliseconds(45)
+    
+    await page.evaluate((selector, timeout) => {
+      // TODO: this is *extremely* basic scrolling logic
+      //  and could be improved a lot to resemble an actual user
+      const { scrollHeight } = document.body
+      const nextPosition = Math.floor(scrollHeight * Math.random())
+      
+      // actually do scrolling
+      window.scrollTo({ top: scrollHeight, behavior: 'smooth' })
+      
+      // and attempt to click buttons if needed
+      const getMoreButton = document.querySelector(selector)
+      
+      setTimeout(() => {
+        getMoreButton?.checkVisibility() && getMoreButton.click()
+
+        window.scrollTo({ top: nextPosition, behavior: 'smooth' })
+      }, timeout)
+    }, { args: [ getMoreSelector, timeout ] })
   }
   
-  */
+  async handleInfiniteScroll(page, {
+    checkForViewedAllMessage,
+    countLoadedResults,
+    getTotalResults
+  }) {
+    let html = await this.getFullPageContents(page)
+
+    let viewedAll = checkForViewedAllMessage(html)
+
+    await delay(getRandomMilliseconds())
+
+    let loadedResults = countLoadedResults(html)
+
+    const {
+      total: totalResults,
+      isPrecise: knownTotal
+    } = getTotalResults(html)
+
+    await this.dismissModal(page)
+
+    console.log({ loadedResults, totalResults })
+    console.log('doomscrolling for you...')
+
+    // TODO: handle client-side occlusion
+    const checkCompleted = () => {
+      if (viewedAll) return true
+
+      if (!knownTotal) return false
+
+      return totalResults <= loadedResults
+    }
+
+    while (!checkCompleted()) {
+      await this.dismissModal(page)
+
+      await this.getMoreResults(page)
+
+      await delay(getRandomMilliseconds(120))
+
+      html = await this.getFullPageContents(page)
+      
+      loadedResults = countLoadedResults(html)
+      viewedAll = checkForViewedAllMessage(html)
+
+      console.log({ loadedResults, totalResults })
+    }
+
+    return await page.evaluate(() =>
+      document.body.innerHTML
+    )
+  }
+}
