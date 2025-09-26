@@ -1,16 +1,18 @@
 import { getDOMQueryResults, parseHTML } from '../../src/utils/scraping.js'
-
+import { filterValues } from 'collections/'
 // baseURL here?
 
-const DOMSelectors = {
+export const DOMSelectors = {
   resultsPage: {
-    nextPageLink: '#nextPage',
     result: 'main#main-content li > div',
     title: 'h3',
     company: 'h4',
     location: '.job-search-card__location',
     pay: '.job-search-card__salary-info',
     postedDate: 'time',
+    dismissModalButton: 'button.modal__dismiss',
+    viewMoreButton: '[aria-label="See more jobs"]',
+    viewedAll: '.see-more-jobs__viewed-all:not(.hidden)'
   },
   detailPage: {
     description: '.description__text section div',
@@ -24,11 +26,58 @@ const DOMSelectors = {
   },
 }
 
-// countLoadedResults
+export const countLoadedResults = (html) => {
+  const { resultsPage: { result } } = DOMSelectors
 
-// getTotalResults
+  const doc = parseHTML(html)
 
-// checkForViewedAllMessage
+  return [...doc.querySelectorAll(result)]
+    .length
+}
+
+// must include head
+export const getTotalResults = (html) => {
+  const doc = parseHTML(html)
+
+  const [count] = doc.title.split(' ')
+  
+  const total = Number(count.replace(/\D/g, '')) || null
+
+  // detect if this total is truly *known*, or just rounded
+  const isPrecise = Boolean(total && total % 1000)
+
+  return {
+    total,
+    isPrecise
+  }
+}
+
+export const checkForKnownTotal = (html) => {
+  const doc = parseHTML(html)
+
+  const [count] = doc.title.split(' ')
+  
+  return Number(count.replace(/\D/g, '')) || null
+}
+
+export const checkForViewedAllMessage = (html) => {
+  const { resultsPage: queries } = DOMSelectors
+
+  const doc = parseHTML(html)
+  
+  // client-side, you could call 'Element.checkVisibility()`
+  //  here, instead of adding `:not` as seen above
+  // but you don't strictly need that if it's in a class
+  // and checking server-side you'd need the full page
+  //  with its accompanying CSS
+  // plus there's no guarantee that a server-side DOM
+  //  polyfill would even support that
+  return Boolean(doc.querySelector(queries.viewedAll))
+}
+
+// checkForKnownTotal(html) {
+
+// }
 
 export const parseJobResultsPage = (html) => {
   const { resultsPage: queries } = DOMSelectors
@@ -71,13 +120,11 @@ export const parseJobResultsPage = (html) => {
         // summary
       }
 
-      const optionalResults = Object.entries({
+      const optionalResults = filterValues({
         pay,
         companyProfileLink,
         postedDate,
-      }).map(([k, v]) => Boolean(v) ? { [k]: v } : {})
-        .reduce((a, b) => ({ ...a, ...b }))
-      // TODO: see indeed
+      }, v => v)
 
       return { ...results, ...optionalResults }
     })
@@ -131,16 +178,14 @@ export const parseJobDetailsPage = (html) => {
   const redirectLink = URL.parse(comment)
     ?.searchParams.get('url')
 
-  const details = Object.entries({
+  const details = filterValues({
     description,
     pay,
     // benefits,
     redirectLink,
     hiringManager,
     // otherMetadata
-  }).map(([k, v]) => Boolean(v) ? { [k]: v } : {})
-    .reduce((a, b) => ({ ...a, ...b }))
-  // TODO: update the above
+  }, v => v)
 
   return details
 }
