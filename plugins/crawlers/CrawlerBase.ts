@@ -6,9 +6,10 @@ import {
   getRandomMilliseconds,
   setupBrowser
 } from '../../src/utils/scraping.js'
-import { getAllJobs } from '../../src/controller/job.ts'
+import { bulkAddJobPosts, getAllJobs } from '../../src/controller/job.ts'
 import { html2md } from '../../src/utils/cleanup.js'
 import { getSettings } from '../../src/controller/settings.ts'
+import { defaultSearchParams } from './searchSettings.js'
 
 // TODO: add some structure for setting up data types
 // expected and optional details
@@ -53,10 +54,11 @@ const checkBlocklist = (job, section) =>{
 export class CrawlerBase {
   constructor(
     retrievalDate = new Date(),
-    searchParams = {},
+    searchParams = defaultSearchParams,
     browserOptions = {}
     // TODO: crawler options... auto-upload, request type, etc
   ) {
+
     this.retrievalDate = retrievalDate
     this.searchParams = searchParams
     // this.browserOptions = browserOptions
@@ -73,7 +75,7 @@ export class CrawlerBase {
     // NOTE: `job` is assumed to be a collected result, not
     //  already merged and stored in a db
     const [ retrievalLink ] = job.retrievalLinks
-    
+
     return data.find((e) => {
       // get bare list of URLs, either from simplified results
       //  such as mid-scraping run, or from merged ones
@@ -117,19 +119,19 @@ export class CrawlerBase {
     const condensedResults = results.reduce((a, b) => {
       /* NOTE:
         this link is constructed in the previous step, but it's
-          important to be aware that this logic can break if 
+          important to be aware that this logic can break if
           there are unique query params (say, any form of
           session tracking), so it's important to sanitize
             this in various places
         this also matters when checking server-side
       */
       const [ retrievalLink ] = b.retrievalLinks
-      
+
       const existingResult = this.detectDuplicateJob(b, a)
 
       if (existingResult) {
         const { retrievalLinks: links } = existingResult
-        
+
         links.push(retrievalLink)
 
         existingResult.retrievalLinks = [...new Set(links)]
@@ -152,14 +154,14 @@ export class CrawlerBase {
         baseURL,
         r.retrievalLinks.at(0)
       ])
-      
+
       const passesFilters = [
         checkBlocklist(r, 'title'),
         checkBlocklist(r, 'company'),
         // checkBlocklist(r, 'global'). TODO: check this
         !baseURL || originsMatch
       ].every((e) => e)
-      
+
       return passesFilters
     })
 
@@ -211,7 +213,7 @@ export class CrawlerBase {
       }
 
       if (lower.includes('month')) return 'month'
-      
+
       if (lower.includes('day')) return 'day'
 
       return 'year'
@@ -237,20 +239,48 @@ export class CrawlerBase {
   //  *NOT* other imports!
   writeResultsToJSON(data, sourceName: string) {
     const outputData = this.cleanupJobsData(data, sourceName)
-    
+
     const outputDir = `./data/${sourceName.toLowerCase()}`
 
     ensureDirSync(outputDir)
-    
+
     const formattedDate = this.retrievalDate.toISOString()
     const filename = `${outputDir}/${formattedDate}.json`
 
     writeJsonSync(filename, outputData, { spaces: 2 })
   }
 
+  async uploadResults(results, sourceName: string) {
+    if (this.searchParams.autoUpload) {
+
+      const {
+        jobs,
+        source
+      } = this.cleanupJobsData(results, sourceName)
+
+      const payload = jobs.map((j) => {
+        // spread static data on sourcing (site, date, etc)
+        //  into one object w the dynamic retrievalDate value
+        const output = { ...j }
+        
+        const sources = j.retrievalLinks
+          .map((retrievalLink) => ({ retrievalLink, ...source }))
+        
+        delete(output.retrievalLinks)
+        
+        return { ...output, sources }
+      })
+
+      console.log('uploading results to server...')
+      await bulkAddJobPosts(payload)
+      
+      console.log('\n', 'successfully uploaded')
+    }
+  }
+
   // extension or automation
   async fetchPage(link, page) {
-    
+
     // if env is extension
     // if (!page) return await fetchHTML(link)
     // fetch results from same origin
@@ -263,7 +293,7 @@ export class CrawlerBase {
       // TODO: figure out loading this as a script
       const fetchHTML = (url) => fetch(url)
         .then(r => r.text())
-      
+
       return await fetchHTML(link)
     }, { args: [ link ] })
 
@@ -302,13 +332,13 @@ export class CrawlerBase {
 
     if (!newResults.length) {
       // TODO: add merge options
-      
+
       return data
     }
 
     for (let [attempt] of Array(maxRetries).entries()) {
       const count = attempt + 1
-      
+
       if (attempt > 0) {
         console.log(`attempt #${count}`)
         console.log(`remaining entries: ${remaining.length}`)
@@ -322,7 +352,7 @@ export class CrawlerBase {
           // TODO: add merge options
           continue
         }
-        
+
         // don't repeat successful calls
         if (job.description) continue
         const { title, company } = job
@@ -336,7 +366,7 @@ export class CrawlerBase {
           const detail = parseDetails(html)
           
           const { description } = detail
-
+          
           if (!description) throw new Error("Couldn't parse details")
           
           detail.description = await html2md(description)
@@ -354,7 +384,7 @@ export class CrawlerBase {
         .filter(({ description: d, isNew }) => isNew && !d)
 
       if (!remaining.length) {
-        console.log('done!')
+        console.log('finished getting results')
         break
       }
 
@@ -463,43 +493,43 @@ export class PaginatedList extends CrawlerBase {
   //  some stuff w nextPage detection needs to change
   async fetchJobResults(page, getNextPageURL) {
     console.log('Getting initial results...')
-    
+
     const pages = []
-    
+
     // TODO: handle this later
     // const isExtension = Boolean(!page)
-    
+
     // run doc query directly if extension
     let pageContents = await this.getPageContents(page)
-    
+
     pages.push(pageContents)
-    
+
     // attempt to use browser document if running in extension
-    
+
     let pageNumber = 1
-    
+
     let nextPageURL = getNextPageURL(pageContents)
     console.log({nextPageURL})
-    
+
     while (nextPageURL) {
       const interval = getRandomMilliseconds(40, 10)
       console.log(`waiting ${interval / 1000} seconds...`, '\n')
-      
+
       await delay(interval)
-      
+
       pageNumber++
       console.log(`getting results for page ${pageNumber}...`)
-      
+
       try {
         // TODO: some kind of param for fetch/goto/other methods
         // pageContents = await fetchHTML(nextPageURL)
-        
+
         await page.goto(nextPageURL)
-        
+
         pageContents = await this.getPageContents(page)
-        
+
         pages.push(pageContents)
-        
+
         nextPageURL = getNextPageURL(pageContents)
       } catch(e) {
         console.error(e)
@@ -513,7 +543,7 @@ export class PaginatedList extends CrawlerBase {
 }
 
 
-export class InfiniteScroller extends CrawlerBase { 
+export class InfiniteScroller extends CrawlerBase {
   constructor(retrievalDate, searchParams, browserOptions) {
     super(retrievalDate, searchParams, browserOptions)
   }
@@ -522,36 +552,40 @@ export class InfiniteScroller extends CrawlerBase {
     // TODO:
     // press escape
     // if still there...
-    
+
     // select button and click
-    await page.evaluate((selector) => {
-      document.querySelector(selector)?.click()
-    }, { args: [ closeButtonSelector ] })
+    if (closeButtonSelector) {
+      await page.evaluate((selector) => {
+        document.querySelector(selector)?.click()
+      }, { args: [ closeButtonSelector ] })
+    }
   }
 
   async getMoreResults(page, getMoreSelector = '') {
     const timeout = getRandomMilliseconds(45)
-    
+
     await page.evaluate((selector, timeout) => {
       // TODO: this is *extremely* basic scrolling logic
       //  and could be improved a lot to resemble an actual user
       const { scrollHeight } = document.body
       const nextPosition = Math.floor(scrollHeight * Math.random())
-      
+
       // actually do scrolling
       window.scrollTo({ top: scrollHeight, behavior: 'smooth' })
-      
-      // and attempt to click buttons if needed
-      const getMoreButton = document.querySelector(selector)
-      
-      setTimeout(() => {
-        getMoreButton?.checkVisibility() && getMoreButton.click()
 
-        window.scrollTo({ top: nextPosition, behavior: 'smooth' })
-      }, timeout)
+      // and attempt to click buttons if needed
+      if (selector) {
+        const getMoreButton = document.querySelector(selector)
+
+        setTimeout(() => {
+          getMoreButton?.checkVisibility() && getMoreButton.click()
+
+          window.scrollTo({ top: nextPosition, behavior: 'smooth' })
+        }, timeout)
+      }
     }, { args: [ getMoreSelector, timeout ] })
   }
-  
+
   async handleInfiniteScroll(page, {
     checkForViewedAllMessage,
     countLoadedResults,
@@ -592,7 +626,7 @@ export class InfiniteScroller extends CrawlerBase {
       await delay(getRandomMilliseconds(120))
 
       html = await this.getFullPageContents(page)
-      
+
       loadedResults = countLoadedResults(html)
       viewedAll = checkForViewedAllMessage(html)
 
