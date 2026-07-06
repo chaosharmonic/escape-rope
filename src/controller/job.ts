@@ -1,7 +1,9 @@
-import { JobPost, LifecycleStage } from '../types.ts'
+import { filterValues } from 'collections/'
+import { Interview, JobPost, LifecycleStage } from '../types.ts'
 import * as settingsController from './settings.ts'
 import { db } from '../db.ts'
 
+// campaign: string = 'global'
 export const addNewJobPost = async (job: JobPost) => {
   const {
     title,
@@ -19,7 +21,7 @@ export const addNewJobPost = async (job: JobPost) => {
       // this needs better sanitization than I'm really doing here
       //  but for now it's not critical
       if (description && description == v.description) {
-        console.log('descriptions match')
+        // console.log('descriptions match')
 
         return true
       }
@@ -30,7 +32,7 @@ export const addNewJobPost = async (job: JobPost) => {
         .some((r) => storedSearchResults.includes(r))
 
       if (resultExists) {
-        console.log('search result exists')
+        // console.log('search result exists')
         return true
       }
 
@@ -45,7 +47,7 @@ export const addNewJobPost = async (job: JobPost) => {
         .some((r) => storedRedirects.includes(r))
 
       if (redirectExists) {
-        console.log('redirect exists')
+        // console.log('redirect exists')
         return true
       }
 
@@ -70,9 +72,9 @@ export const addNewJobPost = async (job: JobPost) => {
   })
 
   if (savedEntry) {
-    console.log('found existing entry for this job. updating...')
+    console.log(`found existing entry for ${title} at ${company}. updating...`)
 
-    console.log({ savedEntry, job })
+    // console.log({ savedEntry, job })
 
     const { id, value: { sources: savedSources } } = savedEntry
     const { sources: newSources } = job
@@ -85,7 +87,7 @@ export const addNewJobPost = async (job: JobPost) => {
     const [storedTimestamps, newTimestamps] = [newSources, savedSources]
       .map((arr) => arr.map((e) => e.retrievalDate))
 
-    console.log({ storedTimestamps, newTimestamps })
+    // console.log({ storedTimestamps, newTimestamps })
 
     const hasBeenProcessed = newTimestamps
       .some((r) => storedTimestamps.includes(r))
@@ -101,11 +103,16 @@ export const addNewJobPost = async (job: JobPost) => {
     // but for now it doesn't matter, bc no one's doing this
     const sources = [...savedSources, ...newSources]
 
-    console.log({ id, sources })
+    // console.log({ id, sources })
+
+    const next = filterValues({
+      sources,
+      description: !savedEntry.description && description
+    })
 
     // TODO: merge any new data into the update
     try {
-      return await db.jobs.update(id, { sources })
+      return await db.jobs.update(id, next, { strategy: 'merge-shallow' })
     } catch(err) {
       // TODO: figure out what's causing this "too large" error
       //  (see chat logs and docs)
@@ -121,9 +128,15 @@ export const addNewJobPost = async (job: JobPost) => {
 //  that might be an issue w validations
 // but it's fine to just loop over it for now
 export const bulkAddJobPosts = async (jobs: JobPost[]) => {
-  const result = await Promise.all(jobs
+  console.log('\n')
+  console.log('processing collected jobs data...', '\n')
+  
+  const result = await Promise.allSettled(jobs
     .map(async (j) => await addNewJobPost(j))
   )
+  
+  console.log('\n')
+  console.log('finished', '\n')
   
   return result
 }

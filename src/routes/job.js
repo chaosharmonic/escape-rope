@@ -144,46 +144,35 @@ jobsRouter.put('/:jobId/interviews/:round', async (ctx) => {
   ctx.response.body = result
 })
 
-jobsRouter.post('/upload', async (ctx) => {
+jobsRouter.post('/upload', async (ctx) => {  
   // TODO: handle alternate request methods
   //  this *could* still be directly sent as JSON
   const payload = await ctx.request.body.formData()
 
   // if direct JSON,
   // data = await ctx.request.body().value
-  const data = await payload.get('file').text()
+  const { jobs, source } = await payload.get('file').text()
     .then(j => {
       // TODO: send or infer file type
       // do something different for CSV
       return JSON.parse(j)
     })
 
-  const retrievalDate = data?.source?.retrievalDate
-  || new Date()
-
-  const {
-    jobs,
-    source = {
-      name: 'user upload',
-      retrievalDate
-    }
-  } = data
-
-  const jobsToAdd = jobs.map((j) => {
-    // spread static data on sourcing (site, date, etc)
-    //  into one object w the dynamic retrievalDate value
-    const output = { ...j }
-    
-    const sources = j.retrievalLinks
-      .map((retrievalLink) => ({ retrievalLink, ...source }))
-    
-    delete(output.retrievalLinks)
-    
-    return { ...output, sources }
-  })
+    const data = jobs.map((j) => {
+      // spread static data on sourcing (site, date, etc)
+      //  into one object w the dynamic retrievalDate value
+      const output = { ...j }
+      
+      const sources = j.retrievalLinks
+        .map((retrievalLink) => ({ retrievalLink, ...source }))
+      
+      delete(output.retrievalLinks)
+      
+      return { ...output, sources }
+    })
 
   try {
-    const result = await jobsController.bulkAddJobPosts(jobsToAdd)
+    const result = await jobsController.bulkAddJobPosts(data)
 
     ctx.response.body = result
 

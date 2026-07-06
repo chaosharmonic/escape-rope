@@ -271,10 +271,13 @@ export class CrawlerBase {
         return { ...output, sources }
       })
 
-      console.log('uploading results to server...')
+      console.log('\n')
+
+      console.log('uploading results to server...', '\n')
       await bulkAddJobPosts(payload)
       
-      console.log('\n', 'successfully uploaded')
+      console.log('\n')
+      console.log('successfully uploaded')
     }
   }
 
