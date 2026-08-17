@@ -10,6 +10,7 @@ import { bulkAddJobPosts, getAllJobs } from '../../src/controller/job.ts'
 import { html2md } from '../../src/utils/cleanup.js'
 import { getSettings } from '../../src/controller/settings.ts'
 import { defaultSearchParams } from './searchSettings.js'
+import * as LDSchema from '../parsers/LDSchema.ts'
 
 // TODO: add some structure for setting up data types
 // expected and optional details
@@ -288,10 +289,6 @@ export class CrawlerBase {
     // if (!page) return await fetchHTML(link)
     // fetch results from same origin
 
-    // if env is automation
-    // const utils =
-    //   `const fetchHTML = ${fetchHTML.toString()}`
-    // pass into fn
     return await page.evaluate(async (link) => {
       // TODO: figure out loading this as a script
       const fetchHTML = (url) => fetch(url)
@@ -366,12 +363,16 @@ export class CrawlerBase {
         
         try {
           const html = await this.fetchPage(retrievalLink, page)
-          const detail = parseDetails(html)
+          const ldDetail = LDSchema.parseJobDetailsPage(html)
+          const pageDetail = parseDetails(html)
           
-          const { description } = detail
+          let description = ldDetail.description
+            || pageDetail.description
           
           if (!description) throw new Error("Couldn't parse details")
           
+          const detail = { ...pageDetail } // for now
+
           detail.description = await html2md(description)
           
           for (let [k, v] of Object.entries(detail)) job[k] ||= v
