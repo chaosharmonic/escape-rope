@@ -33,6 +33,7 @@ export const html2md = async (html) =>
       v = v.replaceAll('• ', '- ')
         .replaceAll('● ', '- ')
         .replaceAll('* \n\n ', '* ')
+        .replaceAll('&nbsp;', ' ')
 
       while (v.includes('*  ')) {
         v = v.replaceAll('*  ', '* ')
