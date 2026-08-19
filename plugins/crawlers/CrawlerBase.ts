@@ -401,6 +401,34 @@ export class CrawlerBase {
     return data
   }
 
+  // page utility handlers
+  
+  async dismissModal(page, closeButtonSelector = '') {
+    // TODO:
+    // press escape
+    // if still there...
+
+    // select button and click
+    if (closeButtonSelector) {
+      await page.evaluate((selector) => {
+        document.querySelector(selector)?.click()
+      }, { args: [ closeButtonSelector ] })
+    }
+  }
+
+  checkForNoResults(html, noResultsText = '') {
+    return [
+      'no results',
+      '0 results',
+      noResultsText
+    ].any(e => html.includes(e))
+  }
+
+  checkForAuthWall(html, wallText = '') {
+    return wallText && html.includes(wallText)
+    // stub. This should be specific to your target.
+  }
+
   // util
   compareOrigins(links) {
     const [origin_a, origin_b] = links
@@ -550,19 +578,6 @@ export class PaginatedList extends CrawlerBase {
 export class InfiniteScroller extends CrawlerBase {
   constructor(retrievalDate, searchParams, browserOptions) {
     super(retrievalDate, searchParams, browserOptions)
-  }
-
-  async dismissModal(page, closeButtonSelector = '') {
-    // TODO:
-    // press escape
-    // if still there...
-
-    // select button and click
-    if (closeButtonSelector) {
-      await page.evaluate((selector) => {
-        document.querySelector(selector)?.click()
-      }, { args: [ closeButtonSelector ] })
-    }
   }
 
   async getMoreResults(page, getMoreSelector = '') {
