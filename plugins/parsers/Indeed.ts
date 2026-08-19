@@ -1,4 +1,5 @@
-import { getDOMQueryResults, parseHTML } from '../../src/utils/scraping'
+import { filterValues } from 'collections/'
+import { getDOMQueryResults, parseHTML } from '../../src/utils/scraping.js'
 
 const baseURL = 'https://www.indeed.com'
 // const searchPageEndpoint = `${baseURL}/jobs`
@@ -11,7 +12,7 @@ const DOMSelectors = {
     company: '[data-testid="company-name"]',
     location: '[data-testid="text-location"]',
     summary: '[data-testid="jobsnippet_footer"] li',
-    pay: '.salary-snippet-container>div',
+    pay: '.salary-snippet-container>div', // FIXME:
   },
   detailPage: {
     description: '#jobDescriptionText',
@@ -58,14 +59,12 @@ export const parseJobResultsPage = (html) => {
         retrievalLinks: [retrievalLink],
     }
     
-    const optionalResults = Object.entries({
+    const optionalResults = filterValues({
         summary,
         pay,
         // hiringMultipleCandidates,
         // easyApply,
-      }).map(([k, v]) => v ? { [k]: v } : {})
-        .reduce((a, b) => ({ ...a, ...b }))
-      // TODO: replace with `filterValues`
+      }, v => v)
 
       return { ...results, ...optionalResults }
     })
@@ -81,9 +80,8 @@ export const parseJobDetailsPage = (html) => {
   const description = doc.querySelector(queries.description)
     ?.innerHTML
 
-  // let pay = doc.querySelector('#salaryInfoAndJobType span')
-  // ?.innerText
-  // if (!pay?.includes('$')) pay = ''
+  let pay = doc.querySelector(queries.pay)?.innerText
+  if (!pay?.includes('$')) pay = ''
 
   // this probably isn't of real use,
   // since these are
@@ -99,13 +97,11 @@ export const parseJobDetailsPage = (html) => {
     ?.innerText
     ?.includes('company site')
 
-  return Object.entries({
+  return filterValues({
     description,
-    // pay,
+    pay,
     // benefits,
     companyProfileLink,
     isRedirect,
-  }).map(([k, v]) => v?.length ? { [k]: v } : {})
-    .reduce((a, b) => ({ ...a, ...b }))
-  // TODO: can I filter this using the stdlib?
+  }, v => v)
 }

@@ -22,8 +22,38 @@ export const DOMSelectors = {
     contactProfile: 'a',
     pay: '.compensation__salary',
     companyProfile: '[data-testid="inlineHeader-companyName"] a',
-    redirectLink: '#applyUrl',
+    applyUrl: '[aria-label="Apply on company website"]'
+    // note: applyURL is only exposed when logged in
   },
+}
+
+export const textStrings = {
+  global: {
+    url: {
+      authWall: 'authwall'
+    }
+  },
+  resultsPage: {
+    body: {
+      noResults: "We couldn’t find a match"
+    }
+  },
+}
+
+export const checkForEmptyResultsPage = (html) => {
+  const {resultsPage: { body: { noResults } }} = textStrings
+
+  return html.includes(noResults)
+}
+
+export const checkForAuthWall = (url) => {
+  const {
+    global: {
+      url: { authWall }
+    }
+  } = textStrings
+
+  return url.includes(authWall)
 }
 
 export const countLoadedResults = (html) => {
@@ -172,17 +202,10 @@ export const parseJobDetailsPage = (html) => {
   const pay = doc.querySelector(queries.pay)
     ?.innerText.trim()
 
-  const comment = doc.querySelector(queries.redirectLink)
-    ?.firstChild.textContent.replaceAll('"', '')
-
-  const redirectLink = URL.parse(comment)
-    ?.searchParams.get('url')
-
   const details = filterValues({
     description,
     pay,
     // benefits,
-    redirectLink,
     hiringManager,
     // otherMetadata
   }, v => v)

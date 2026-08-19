@@ -112,7 +112,6 @@ export const parseJobDetailsPage = (html) => {
   } = DOMSelectors
 
   const mainContents = doc?.querySelector(queries.mainContents)
-    ?.firstElementChild?.lastElementChild?.firstElementChild
 
   const postBody = mainContents?.querySelector(queries.description)
   const description = postBody?.innerHTML
@@ -122,13 +121,6 @@ export const parseJobDetailsPage = (html) => {
 
   const redirectLink = doc?.querySelector(queries.applyLink)
     ?.getAttribute('href')
-
-  const skillsContainer = [...mainContents?.querySelectorAll('div')]
-    ?.find((div) => div.innerText == 'Top Skills')
-    ?.nextElementSibling
-
-  const topSkills = [...skillsContainer?.children]
-    ?.map((n) => n.innerText)
 
   // const officeContainer = mainContents?.querySelector('.overview-offices-body')
   // const officeDetails = [...officeContainer?.querySelectorAll('p')]
@@ -143,7 +135,6 @@ export const parseJobDetailsPage = (html) => {
 
   return {
     description,
-    topSkills,
     redirectLink,
     // company: {
     //   bio: companyBio,
