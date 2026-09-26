@@ -370,10 +370,10 @@ export class CrawlerBase {
             || pageDetail.description
           
           if (!description) throw new Error("Couldn't parse details")
-          
-          const detail = { ...pageDetail } // for now
 
-          detail.description = await html2md(description)
+          const md = await html2md(description)
+          
+          const detail = { ...pageDetail, description: md } // for now
           
           for (let [k, v] of Object.entries(detail)) job[k] ||= v
           this.writeResultsToJSON(data, sourceName)
