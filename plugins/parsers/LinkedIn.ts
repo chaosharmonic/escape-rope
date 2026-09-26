@@ -4,6 +4,7 @@ import { filterValues } from 'collections/'
 
 export const DOMSelectors = {
   resultsPage: {
+    totalResults: '.results-context-header__job-count',
     result: 'main#main-content li > div',
     title: 'h3',
     company: 'h4',
@@ -65,29 +66,22 @@ export const countLoadedResults = (html) => {
     .length
 }
 
-// must include head
 export const getTotalResults = (html) => {
+  const { resultsPage: { totalResults }} = DOMSelectors
+  
   const doc = parseHTML(html)
 
-  const [count] = doc.title.split(' ')
+  const count = doc.querySelector(totalResults)?.innerText
   
   const total = Number(count.replace(/\D/g, '')) || null
 
   // detect if this total is truly *known*, or just rounded
-  const isPrecise = Boolean(total && total % 1000)
+  const isPrecise = !count.includes('+')
 
   return {
     total,
     isPrecise
   }
-}
-
-export const checkForKnownTotal = (html) => {
-  const doc = parseHTML(html)
-
-  const [count] = doc.title.split(' ')
-  
-  return Number(count.replace(/\D/g, '')) || null
 }
 
 export const checkForViewedAllMessage = (html) => {
@@ -104,10 +98,6 @@ export const checkForViewedAllMessage = (html) => {
   //  polyfill would even support that
   return Boolean(doc.querySelector(queries.viewedAll))
 }
-
-// checkForKnownTotal(html) {
-
-// }
 
 export const parseJobResultsPage = (html) => {
   const { resultsPage: queries } = DOMSelectors
