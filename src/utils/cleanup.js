@@ -1,3 +1,4 @@
+import { unescape } from "jsr:@std/html/entities"
 import { unified } from 'npm:unified'
 import rehypeParse from 'npm:rehype-parse'
 import remarkParse from 'npm:remark-parse'
@@ -6,12 +7,38 @@ import remarkStringify from 'npm:remark-stringify'
 import rehypeRemark from 'npm:rehype-remark'
 import remarkRehype from 'npm:remark-rehype'
 
-export const html2md = async (html) =>
-  await unified()
+export const html2md = async (html) => {
+  let prepped = unescape(html)
+
+  const isHTML = [
+    "div",
+    "br",
+    "p",
+    "ul"
+  ].some(el => prepped.includes(`<${el}>`))
+
+  if (!isHTML) return prepped
+    .replaceAll('•', '- ')
+    .replaceAll('●', '- ')
+    .replaceAll('·', '- ')
+    .replaceAll('\no ', '\n- ')
+    .replaceAll('- \n\n ', '- ')
+    .replaceAll('****', '**')
+
+  for (let el of ['strong', 'em', 'b', 'i']) {
+    const badBreak = `<br></${el}>`
+    const goodBreak = `</${el}><br>`
+
+    while (prepped.includes(badBreak)) {
+      prepped = (prepped.replaceAll(badBreak, goodBreak))
+    }
+  }
+
+  return await unified()
     .use(rehypeParse)
     .use(rehypeRemark)
     .use(remarkStringify)
-    .process(html) // this outputs an object...
+    .process(prepped) // this outputs an object...
     // ... with 'value' containing the actual string
     .then(({ value: v }) => {
       // strip all extraneous slashes padding out newlines
@@ -19,7 +46,7 @@ export const html2md = async (html) =>
         v = v.replaceAll('\\', '')
       }
 
-      while (v.includes('\n \n'.repeat(3))) {
+      while (v.includes('\n \n')) {
         v = v.replaceAll('\n \n', '\n\n')
       }
 
@@ -30,17 +57,24 @@ export const html2md = async (html) =>
       // and other things
       //  (*most* of these probably won't exist in layers)
 
-      v = v.replaceAll('• ', '- ')
-        .replaceAll('● ', '- ')
-        .replaceAll('* \n\n ', '* ')
-        .replaceAll('&nbsp;', ' ')
+      // various non-dashed bullet points
+      v = v.replaceAll('•', '- ')
+        .replaceAll('●', '- ')
+        .replaceAll('·', '- ')
+        .replaceAll('- \n\n ', '- ')
+        .replaceAll('\no ', '\n- ')
+        // any extra bullet points potentially
+        //  introduced by the above
+        .replaceAll('- - '), ('- ')
+        .replaceAll('****', '**')
 
-      while (v.includes('*  ')) {
-        v = v.replaceAll('*  ', '* ')
+      while (v.includes('-  ')) {
+        v = v.replaceAll('-  ', '- ')
       }
 
       return v
     })
+}
 
 export const md2html = async (md) =>
   await unified()
@@ -50,26 +84,3 @@ export const md2html = async (md) =>
     .process(md) // see above
     .then(({ value: v }) => v)
 
-// alternative for Markdown handling. I still don't have a *strong*
-//  opinion here, but it'd be nice to not need 7 different NPM imports
-
-/*
-import { DOMParser } from 'deno-dom/mod.ts'
-import { TDService } from 'npm:turndown'
-
-const html2md = html => {
-  const doc = new DOMParser().parseFromString(html, 'text/html')
-
-  // const looseList = [...doc.querySelectorAll('li p')]
-  // looseList.forEach(e => { e.parentNode.innerHTML = e.innerHTML })
-
-  return new TDService().turndown(doc.body.innerHTML)
-}
-
-
-
-
-
-...
-
-*/

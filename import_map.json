@@ -6,6 +6,7 @@
     "deno-dom/": "jsr:/@b-fuze/deno-dom/",
     "dotenv/": "jsr:/@std/dotenv/",
     "fs/": "jsr:/@std/fs/",
+    "html/": "jsr:/@std/html/",
     "jsonfile/": "https://deno.land/x/jsonfile@1.0.0/",
     "astral/": "jsr:/@astral/astral/",
     "kvdex/": "jsr:/@olli/kvdex/",
